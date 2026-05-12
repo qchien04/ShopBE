@@ -14,6 +14,11 @@ import java.util.List;
 public class CouponController {
     private final CouponService couponService;
 
+    @GetMapping
+    public ResponseEntity<List<Coupon>> getActiveCoupons() {
+        return ResponseEntity.ok(couponService.getActiveCoupons());
+    }
+
     @PostMapping("/validate")
     public ResponseEntity<CouponValidationResponse> validateCoupon(
             @RequestBody CouponValidationRequest request) {

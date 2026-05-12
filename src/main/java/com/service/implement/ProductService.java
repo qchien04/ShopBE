@@ -42,23 +42,20 @@ public class ProductService {
     public Page<ProductDTO> getAllProducts(int page, int size, String keyword) {
         PageRequest pageRequest = PageRequest.of(page, size);
 
-        Page<Product> products= productRepository.searchAllWithKeyWord(keyword,pageRequest);
+        Page<Product> products = productRepository.searchAllWithKeyWord(keyword, pageRequest);
 
         return products.map(productMapper::toDto);
     }
 
-
     public List<ProductDTO> getProductsByIds(List<Long> ids) {
-        List<Product> products= productRepository.findAllById(ids);
+        List<Product> products = productRepository.findAllById(ids);
         return productMapper.toDtos(products);
     }
 
-
     public List<ProductVariantDTO> getProductVariantsByIds(List<Long> ids) {
-        List<ProductVariant> products= productVariantRepository.findAllById(ids);
+        List<ProductVariant> products = productVariantRepository.findAllById(ids);
         return productVariantMapper.toDtos(products);
     }
-
 
     private Product findProductById(Long id) {
         return productRepository.findById(id)
@@ -66,12 +63,13 @@ public class ProductService {
     }
 
     public ProductDTO getProductDTOById(Long id) {
-        Product product= productRepository.findWithDetailById(id).orElseThrow(() -> new RuntimeException("Product not found"));
+        Product product = productRepository.findWithDetailById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
         return productMapper.toFullDto(product);
     }
 
     public ProductDTO getProductBySlug(String slug) {
-        Product product= productRepository.findBySlug(slug)
+        Product product = productRepository.findBySlug(slug)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
         return productMapper.toFullDto(product);
     }
@@ -83,21 +81,25 @@ public class ProductService {
 
         LocalDate today = LocalDate.now();
 
-        LocalDateTime dayStart   = today.atStartOfDay();
-        LocalDateTime weekStart  = today
+        LocalDateTime dayStart = today.atStartOfDay();
+        LocalDateTime weekStart = today
                 .with(WeekFields.of(Locale.forLanguageTag("vi")).dayOfWeek(), 1)
                 .atStartOfDay();
         LocalDateTime monthStart = today.withDayOfMonth(1).atStartOfDay();
-        LocalDateTime yearStart  = today.withDayOfYear(1).atStartOfDay();
+        LocalDateTime yearStart = today.withDayOfYear(1).atStartOfDay();
 
         List<VariantStatsDTO> variantStats = orderItemRepository
                 .getVariantStatsByProduct(productId, dayStart, weekStart, monthStart, yearStart);
 
-        long   soldToday    = variantStats.stream().mapToLong(v -> v.getSoldToday()    != null ? v.getSoldToday()    : 0).sum();
-        long   soldThisWeek = variantStats.stream().mapToLong(v -> v.getSoldThisWeek() != null ? v.getSoldThisWeek() : 0).sum();
-        long   soldThisMonth= variantStats.stream().mapToLong(v -> v.getSoldThisMonth()!= null ? v.getSoldThisMonth(): 0).sum();
-        long   soldThisYear = variantStats.stream().mapToLong(v -> v.getSoldThisYear() != null ? v.getSoldThisYear() : 0).sum();
-        double revenueToday = variantStats.stream().mapToDouble(v -> v.getRevenueTotal()!= null ? v.getRevenueTotal(): 0).sum();
+        long soldToday = variantStats.stream().mapToLong(v -> v.getSoldToday() != null ? v.getSoldToday() : 0).sum();
+        long soldThisWeek = variantStats.stream().mapToLong(v -> v.getSoldThisWeek() != null ? v.getSoldThisWeek() : 0)
+                .sum();
+        long soldThisMonth = variantStats.stream()
+                .mapToLong(v -> v.getSoldThisMonth() != null ? v.getSoldThisMonth() : 0).sum();
+        long soldThisYear = variantStats.stream().mapToLong(v -> v.getSoldThisYear() != null ? v.getSoldThisYear() : 0)
+                .sum();
+        double revenueToday = variantStats.stream()
+                .mapToDouble(v -> v.getRevenueTotal() != null ? v.getRevenueTotal() : 0).sum();
 
         return ProductStatsResponse.builder()
                 .productId(productId)
@@ -120,8 +122,7 @@ public class ProductService {
             List<Long> brandIds,
             String sort,
             Long minPrice,
-            Long maxPrice
-    ) {
+            Long maxPrice) {
         PageRequest pageRequest = PageRequest.of(page, size);
         List<Category> categories = categoryRepository.findAllSubCategories(categoryId);
 
@@ -133,20 +134,19 @@ public class ProductService {
             categoryIds = subCategoryIds;
         }
 
-        if(minPrice==null){
-            minPrice= 0L;
+        if (minPrice == null) {
+            minPrice = 0L;
         }
-        if(maxPrice==null){
-            maxPrice= 9999999L;
+        if (maxPrice == null) {
+            maxPrice = 9999999L;
         }
-        System.out.println(minPrice+" "+maxPrice);
+        System.out.println(minPrice + " " + maxPrice);
         Page<Product> products = productRepository.findWithFilter(
                 categoryIds,
                 brandIds,
                 sort,
                 minPrice,
-                maxPrice,pageRequest
-        );
+                maxPrice, pageRequest);
 
         return products.map(productMapper::toDto);
     }
@@ -157,8 +157,7 @@ public class ProductService {
             List<Long> subCategoryIds,
             String sort,
             Long minPrice,
-            Long maxPrice
-    ) {
+            Long maxPrice) {
         PageRequest pageRequest = PageRequest.of(page, size);
         List<Category> categories = productRepository.findCategoriesByBrandId(brandId);
 
@@ -170,39 +169,37 @@ public class ProductService {
             categoryIds = subCategoryIds;
         }
 
-        if(minPrice==null){
-            minPrice= 0L;
+        if (minPrice == null) {
+            minPrice = 0L;
         }
-        if(maxPrice==null){
-            maxPrice= 9999999L;
+        if (maxPrice == null) {
+            maxPrice = 9999999L;
         }
-        List<Long> brandIds=new ArrayList<>();
+        List<Long> brandIds = new ArrayList<>();
         brandIds.add(brandId);
         Page<Product> products = productRepository.findWithFilter(
                 categoryIds,
                 brandIds,
                 sort,
                 minPrice,
-                maxPrice,pageRequest
-        );
+                maxPrice, pageRequest);
 
         return products.map(productMapper::toDto);
     }
 
     public List<ProductDTO> getFeaturedProducts() {
-        List<Product> products=productRepository.findByFeaturedTrue();
+        List<Product> products = productRepository.findByFeaturedTrue();
         return productMapper.toDtos(products);
     }
 
     @Transactional
-    public Page<ProductDTO> searchProducts(String keyword, int page, int size,long minPrice,
-                                           long maxPrice,List<Long> brandIds,
-                                           List<Long> subCategoryIds,String sort,boolean inStock) {
+    public Page<ProductDTO> searchProducts(String keyword, int page, int size, long minPrice,
+            long maxPrice, List<Long> brandIds,
+            List<Long> subCategoryIds, String sort, boolean inStock) {
         PageRequest pageRequest = PageRequest.of(page, size);
-        Page<Product> products = productRepository.search(keyword, minPrice
-                                                                ,maxPrice,brandIds,
-                                                                subCategoryIds,sort,inStock,
-                                                                pageRequest);
+        Page<Product> products = productRepository.search(keyword, minPrice, maxPrice, brandIds,
+                subCategoryIds, sort, inStock,
+                pageRequest);
         return products.map(productMapper::toDto);
     }
 
@@ -214,7 +211,7 @@ public class ProductService {
 
         Brand brand = brandRepository.findById(request.getBrandId())
                 .orElseThrow(() -> new NotFoundObjectRequestException("Brand not found"));
-        Product newProduct=Product.builder()
+        Product newProduct = Product.builder()
                 .name(request.getName())
                 .sku(request.getSku())
                 .slug(request.getSlug())
@@ -256,14 +253,14 @@ public class ProductService {
 
             newProduct.setProductVariants(productVariants);
         }
-        newProduct=productRepository.save(newProduct);
+        newProduct = productRepository.save(newProduct);
 
         if (request.getImageIds() != null && !request.getImageIds().isEmpty()) {
             Set<ProductImage> images = new HashSet<>(imageRepository.findAllById(request.getImageIds()));
             if (images.size() != request.getImageIds().size()) {
                 throw new InvalidRequestException("Some images not found");
             }
-            for(ProductImage i:images){
+            for (ProductImage i : images) {
                 i.setProduct(newProduct);
             }
             imageRepository.saveAll(images);
@@ -303,8 +300,7 @@ public class ProductService {
 
         try {
             product.setStatus(
-                    Product.ProductStatus.valueOf(request.getStatus().toUpperCase())
-            );
+                    Product.ProductStatus.valueOf(request.getStatus().toUpperCase()));
         } catch (Exception e) {
             throw new InvalidRequestException("Invalid product status");
         }
@@ -331,8 +327,7 @@ public class ProductService {
         product.getImages().clear();
 
         if (request.getImageIds() != null) {
-            Set<ProductImage> images =
-                    new HashSet<>(imageRepository.findAllById(request.getImageIds()));
+            Set<ProductImage> images = new HashSet<>(imageRepository.findAllById(request.getImageIds()));
 
             for (ProductImage img : images) {
                 img.setProduct(product);
@@ -355,15 +350,14 @@ public class ProductService {
         productRepository.save(product);
     }
 
-    public List<ProductDTO> getNewProducts(Long categoryId){
-        int limit=5;
+    public List<ProductDTO> getNewProducts(Long categoryId) {
+        int limit = 10;
         PageRequest pageRequest = PageRequest.of(0, limit);
         List<Product> products = new ArrayList<>();
-        if(categoryId==null){
+        if (categoryId == null) {
             products = productRepository.newProduct((Pageable) pageRequest);
-        }
-        else {
-            products = productRepository.newProductByCategory((Pageable) pageRequest,categoryId);
+        } else {
+            products = productRepository.newProductByCategory((Pageable) pageRequest, categoryId);
         }
 
         return productMapper.toFullDtos(products);

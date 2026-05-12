@@ -9,6 +9,7 @@ import com.exception.NotFoundObjectRequestException;
 import com.repository.ProductRepository;
 import com.repository.ReviewRepository;
 import com.repository.UserAccountRepo;
+import com.repository.OrderItemRepository;
 import com.request.ReviewRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final ProductRepository productRepository;
     private final UserAccountRepo userRepository;
+    private final OrderItemRepository orderItemRepository;
 
     public ReviewDTO addReview(Long productId, ReviewRequest request) {
         Long userId = ((Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
@@ -33,6 +35,10 @@ public class ReviewService {
         }
         if (reviewRepository.existsByProductIdAndUserId(productId, userId)) {
             throw new IllegalStateException("Bạn đã đánh giá sản phẩm này rồi");
+        }
+
+        if (!orderItemRepository.hasUserPurchasedProduct(userId, productId)) {
+            throw new IllegalStateException("Bạn phải mua sản phẩm này và nhận hàng thành công mới có thể đánh giá");
         }
 
         Product product = productRepository.findById(productId)
@@ -45,7 +51,7 @@ public class ReviewService {
         review.setUser(user);
         review.setRating(request.rating());
         review.setComment(request.comment());
-        review.setStatus(Review.ReviewStatus.PENDING);
+        review.setStatus(Review.ReviewStatus.APPROVED);
 
         return toResponse(reviewRepository.save(review));
     }

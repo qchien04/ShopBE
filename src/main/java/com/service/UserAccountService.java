@@ -34,4 +34,6 @@ public interface UserAccountService{
     public User findByEmail(String email);
     public List<User> searchUser(String query);
     public User save(User user);
+
+    public List<UserAccountDTO> getNewUsers();
 }

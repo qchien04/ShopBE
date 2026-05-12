@@ -1,4 +1,5 @@
 package com.controller;
+
 import com.DTO.ProductDTO;
 import com.DTO.ProductVariantDTO;
 import com.entity.Product;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+
 @RestController
 @RequestMapping("/products")
 @RequiredArgsConstructor
@@ -23,29 +25,25 @@ public class ProductController {
             @RequestParam(required = false) List<Long> ids,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "8") int size,
-            @RequestParam(required = false) String keyword
-    ) {
-        if(ids==null){
-            Page<ProductDTO> dtoPage=productService.getAllProducts(page,size,keyword);
-            PageResponse<ProductDTO> response=new PageResponse<>(
+            @RequestParam(required = false) String keyword) {
+        if (ids == null) {
+            Page<ProductDTO> dtoPage = productService.getAllProducts(page, size, keyword);
+            PageResponse<ProductDTO> response = new PageResponse<>(
                     dtoPage.getContent(),
                     dtoPage.getNumber(),
                     dtoPage.getSize(),
                     dtoPage.getTotalElements(),
-                    dtoPage.getTotalPages()
-            );
+                    dtoPage.getTotalPages());
 
             return ResponseEntity.ok(response);
-        }
-        else{
-            List<ProductDTO> productDTOS=productService.getProductsByIds(ids);
-            PageResponse<ProductDTO> response=new PageResponse<>(
+        } else {
+            List<ProductDTO> productDTOS = productService.getProductsByIds(ids);
+            PageResponse<ProductDTO> response = new PageResponse<>(
                     productDTOS,
                     0,
                     productDTOS.size(),
                     productDTOS.size(),
-                    1
-            );
+                    1);
             return ResponseEntity.ok(response);
         }
 
@@ -58,8 +56,7 @@ public class ProductController {
 
     @GetMapping("/variant")
     public ResponseEntity<List<ProductVariantDTO>> getVariantAllProducts(
-            @RequestParam(required = true) List<Long> ids
-    ) {
+            @RequestParam(required = true) List<Long> ids) {
         return ResponseEntity.ok(productService.getProductVariantsByIds(ids));
     }
 
@@ -82,17 +79,16 @@ public class ProductController {
             @RequestParam(defaultValue = "0") Long minPrice,
             @RequestParam(defaultValue = "9999999999") Long maxPrice,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "8") int size
-    ) {
+            @RequestParam(defaultValue = "8") int size) {
 
-        Page<ProductDTO> dtoPage=productService.getProductsByCategory(categoryId, page, size, subCategoryIds, brandIds, sort, minPrice, maxPrice);
-        PageResponse<ProductDTO> response=new PageResponse<>(
+        Page<ProductDTO> dtoPage = productService.getProductsByCategory(categoryId, page, size, subCategoryIds,
+                brandIds, sort, minPrice, maxPrice);
+        PageResponse<ProductDTO> response = new PageResponse<>(
                 dtoPage.getContent(),
                 dtoPage.getNumber(),
                 dtoPage.getSize(),
                 dtoPage.getTotalElements(),
-                dtoPage.getTotalPages()
-        );
+                dtoPage.getTotalPages());
         return ResponseEntity.ok(response);
     }
 
@@ -104,16 +100,15 @@ public class ProductController {
             @RequestParam(defaultValue = "0") Long minPrice,
             @RequestParam(defaultValue = "9999999999") Long maxPrice,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "8") int size
-    ) {
-        Page<ProductDTO> dtoPage=productService.getProductsByBrand(brandId, page, size, subCategoryIds , sort, minPrice, maxPrice);
-        PageResponse<ProductDTO> response=new PageResponse<>(
+            @RequestParam(defaultValue = "8") int size) {
+        Page<ProductDTO> dtoPage = productService.getProductsByBrand(brandId, page, size, subCategoryIds, sort,
+                minPrice, maxPrice);
+        PageResponse<ProductDTO> response = new PageResponse<>(
                 dtoPage.getContent(),
                 dtoPage.getNumber(),
                 dtoPage.getSize(),
                 dtoPage.getTotalElements(),
-                dtoPage.getTotalPages()
-        );
+                dtoPage.getTotalPages());
         return ResponseEntity.ok(response);
     }
 
@@ -137,18 +132,15 @@ public class ProductController {
             @RequestParam(defaultValue = "9999999999") Long maxPrice,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "8") int size,
-            @RequestParam(defaultValue = "true") boolean inStock
-    ) {
-        Page<ProductDTO> dtoPage=productService.searchProducts(keyword, page, size,minPrice
-                ,maxPrice,brandIds,
-                subCategoryIds,sort,inStock);
-        PageResponse<ProductDTO> response=new PageResponse<>(
+            @RequestParam(defaultValue = "true") boolean inStock) {
+        Page<ProductDTO> dtoPage = productService.searchProducts(keyword, page, size, minPrice, maxPrice, brandIds,
+                subCategoryIds, sort, inStock);
+        PageResponse<ProductDTO> response = new PageResponse<>(
                 dtoPage.getContent(),
                 dtoPage.getNumber(),
                 dtoPage.getSize(),
                 dtoPage.getTotalElements(),
-                dtoPage.getTotalPages()
-        );
+                dtoPage.getTotalPages());
         return ResponseEntity.ok(response);
     }
 
@@ -159,7 +151,7 @@ public class ProductController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ProductDTO> updateProduct(@PathVariable Long id,
-                                                 @RequestBody UpdateProductRequest request) {
+            @RequestBody UpdateProductRequest request) {
         return ResponseEntity.ok(productService.updateProduct(id, request));
     }
 

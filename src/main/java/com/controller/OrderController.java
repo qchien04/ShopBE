@@ -1,6 +1,5 @@
 package com.controller;
 import com.DTO.OrderDTO;
-import com.entity.Order;
 import com.request.OrderRequest;
 import com.request.UpdateOrderStatusRequest;
 import com.service.implement.OrderService;
@@ -20,12 +19,12 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Order> getOrderById(@PathVariable Long id) {
+    public ResponseEntity<OrderDTO> getOrderById(@PathVariable Long id) {
         return ResponseEntity.ok(orderService.getOrderById(id));
     }
 
     @GetMapping("/number/{orderNumber}")
-    public ResponseEntity<Order> getOrderByOrderNumber(@PathVariable String orderNumber) {
+    public ResponseEntity<OrderDTO> getOrderByOrderNumber(@PathVariable String orderNumber) {
         return ResponseEntity.ok(orderService.getOrderByOrderNumber(orderNumber));
     }
 

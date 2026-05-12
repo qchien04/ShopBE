@@ -15,13 +15,37 @@ public class AiController {
 
     private final ProductRagService ragService;
     private final ProductEmbeddingService productEmbeddingService;
-    @GetMapping("/ask")
-    public ResponseEntity<AiResponse> ask(@RequestParam String q) {
-        AiResponse res=ragService.ask(q);
+    @PostMapping("/ask")
+    public ResponseEntity<AiResponse> ask(@RequestBody AiRequest request) {
+        AiResponse res=ragService.ask(request.getQ(), request.getHistory());
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
 
-    //private final ProductRagService ragService;
+    // --- Endpoints cho Python Agent gọi ngược lại ---
+    @GetMapping("/internal/addresses")
+    public ResponseEntity<?> getAddresses() {
+        return ResponseEntity.ok(ragService.getAddressesForCurrentCustomer());
+    }
+
+    @GetMapping("/internal/search-products")
+    public ResponseEntity<?> searchProducts(@RequestParam String q) {
+        return ResponseEntity.ok(ragService.searchContextOnly(q));
+    }
+
+    @GetMapping("/internal/orders")
+    public ResponseEntity<?> getOrders() {
+        return ResponseEntity.ok(ragService.getOrdersForCurrentCustomer());
+    }
+
+    @GetMapping("/internal/payment-link")
+    public ResponseEntity<?> getPaymentLink(@RequestParam Long orderId) {
+        return ResponseEntity.ok(ragService.getPaymentLinkForOrder(orderId));
+    }
+
+    @PostMapping("/internal/orders")
+    public ResponseEntity<?> placeOrder(@RequestBody java.util.Map<String, Object> request) {
+        return ResponseEntity.ok(ragService.placeOrder(request));
+    }
 
     @GetMapping("/emb")
     public ResponseEntity<String> ask(@RequestParam Long id) {

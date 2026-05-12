@@ -30,7 +30,10 @@ public class Order {
 
     private Double subtotal;
     private Double shippingFee;
+    @Builder.Default
     private Double discount = 0.0;
+    private String couponCode;
+    private String couponDetails;
     private Double total;
 
     @Column(columnDefinition = "TEXT")
@@ -39,24 +42,28 @@ public class Order {
     @Column(columnDefinition = "TEXT")
     private String internalNote;
 
+    @Builder.Default
     private Integer deliveryAttempts = 0;
 
     private LocalDateTime deliveredAt;
     private LocalDateTime cancelledAt;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private OrderStatus status = OrderStatus.PENDING;
 
     @Enumerated(EnumType.STRING)
     private PaymentTransaction.PaymentMethod paymentMethod;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private PaymentTransaction.PaymentStatus paymentStatus = PaymentTransaction.PaymentStatus.UNPAID;
 
     @Column(columnDefinition = "TEXT")
     private String note;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    @Builder.Default
     private Set<OrderItem> items = new HashSet<>();
 
     @CreationTimestamp

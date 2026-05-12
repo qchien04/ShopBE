@@ -37,4 +37,9 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
             @Param("monthStart")  LocalDateTime monthStart,
             @Param("yearStart")   LocalDateTime yearStart
     );
+
+    @Query("SELECT COUNT(oi) > 0 FROM OrderItem oi JOIN oi.order o " +
+           "WHERE o.user.id = :userId AND oi.productVariant.product.id = :productId " +
+           "AND o.status = 'DELIVERED'")
+    boolean hasUserPurchasedProduct(@Param("userId") Long userId, @Param("productId") Long productId);
 }

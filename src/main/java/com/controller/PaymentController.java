@@ -38,6 +38,7 @@ public class PaymentController {
     public ApiResponse2<ConfirmWebhookResponse> confirmWebhook(@RequestBody(required = false) MyConfirmWebhookRequest rq) {
         try {
             Long myId = ((Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+            System.out.println(myId);
             if(myId!=1) throw new NoPermissionException("Cut ra ngoai!");
 
             String cfDomain = rq != null ? rq.getDomain() : null;

@@ -58,8 +58,8 @@ public class ChatController {
     // ── Join room ─────────────────────────────────────────────────────────────
     @MessageMapping("/chat.join")
     public void joinRoom(@Payload Long roomId,
-                         Principal principal,
-                         SimpMessageHeaderAccessor headerAccessor) {
+            Principal principal,
+            SimpMessageHeaderAccessor headerAccessor) {
         Long userId = getUserId(principal);
 
         if (!chatService.isMemberOfRoom(userId, roomId)) {
@@ -67,14 +67,14 @@ public class ChatController {
         }
 
         Map<String, Object> session = headerAccessor.getSessionAttributes();
-        addUserToSession(session, roomId, userId); // ✅
+        addUserToSession(session, roomId, userId); //
     }
 
     // ── Gửi tin nhắn ─────────────────────────────────────────────────────────
     @MessageMapping("/chat.send")
     public void sendMessage(@Payload String content,
-                            Principal principal,
-                            SimpMessageHeaderAccessor headerAccessor) {
+            Principal principal,
+            SimpMessageHeaderAccessor headerAccessor) {
         Map<String, Object> session = headerAccessor.getSessionAttributes();
         Long roomId = (Long) session.get("roomId");
         Long userId = getUserId(principal);
@@ -93,32 +93,28 @@ public class ChatController {
         // Gửi tin nhắn đến room
         messagingTemplate.convertAndSend("/topic/room." + roomId, saved);
 
-        // ✅ Dùng userIds từ session, không cần query DB
+        // Dùng userIds từ session, không cần query DB
         Set<Long> userIds = (Set<Long>) session.getOrDefault("userIds", new HashSet<>());
         userIds.stream()
                 .filter(id -> !id.equals(userId)) // không gửi lại cho người gửi
-                .forEach(receiverId ->
-                        messagingTemplate.convertAndSendToUser(
-                                receiverId.toString(),
-                                "/queue/notifications",
-                                new NotificationPayload(
-                                        roomId, userId,
-                                        "Tin nhắn mới từ " + senderRole,
-                                        chatService.countUnread(roomId)
-                                )
-                        )
-                );
+                .forEach(receiverId -> messagingTemplate.convertAndSendToUser(
+                        receiverId.toString(),
+                        "/queue/notifications",
+                        new NotificationPayload(
+                                roomId, userId,
+                                "Tin nhắn mới từ " + senderRole,
+                                chatService.countUnread(roomId))));
     }
 
     // ── Tạo room mới ──────────────────────────────────────────────────────────
     @MessageMapping("/chat.start")
     public void startChat(Principal principal,
-                          SimpMessageHeaderAccessor headerAccessor) {
+            SimpMessageHeaderAccessor headerAccessor) {
         Long customerId = getUserId(principal);
         ChatRoomDTO room = chatService.createRoom(customerId);
 
         Map<String, Object> session = headerAccessor.getSessionAttributes();
-        addUserToSession(session, room.getId(), customerId); // ✅
+        addUserToSession(session, room.getId(), customerId); //
 
         messagingTemplate.convertAndSend("/topic/staff.newRoom", room);
     }
@@ -126,8 +122,8 @@ public class ChatController {
     // ── Nhân viên nhận room ───────────────────────────────────────────────────
     @MessageMapping("/chat.accept")
     public void acceptRoom(@Payload Long roomId,
-                           Principal principal,
-                           SimpMessageHeaderAccessor headerAccessor) {
+            Principal principal,
+            SimpMessageHeaderAccessor headerAccessor) {
         if (!hasRole(principal, "ROLE_ADMIN")) {
             throw new AccessDeniedException("Không có quyền");
         }
@@ -136,24 +132,26 @@ public class ChatController {
         ChatRoom room = chatService.assignStaff(roomId, staffId);
 
         Map<String, Object> session = headerAccessor.getSessionAttributes();
-        addUserToSession(session, roomId, staffId); // ✅
+        addUserToSession(session, roomId, staffId); //
 
-        // ✅ Broadcast danh sách thành viên hiện tại trong room
+        // Broadcast danh sách thành viên hiện tại trong room
         Set<Long> userIds = (Set<Long>) session.get("userIds");
         messagingTemplate.convertAndSend("/topic/room." + room.getId() + ".members", userIds);
 
         messagingTemplate.convertAndSend("/topic/room." + room.getId(), room);
     }
+
     @MessageMapping("/chat.leave")
     public void leaveRoom(Principal principal,
-                          SimpMessageHeaderAccessor headerAccessor) {
+            SimpMessageHeaderAccessor headerAccessor) {
         Long userId = getUserId(principal);
         Map<String, Object> session = headerAccessor.getSessionAttributes();
         Long roomId = (Long) session.get("roomId");
 
-        if (roomId == null) return;
+        if (roomId == null)
+            return;
 
-        // ✅ Xóa userId khỏi danh sách
+        // Xóa userId khỏi danh sách
         Set<Long> userIds = (Set<Long>) session.getOrDefault("userIds", new HashSet<>());
         userIds.remove(userId);
         session.put("userIds", userIds);

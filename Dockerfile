@@ -19,7 +19,7 @@ RUN addgroup -S spring && adduser -S spring -G spring
 RUN mkdir -p /app/uploads /app/streams && \
     chown -R spring:spring /app
 
-# ✅ Sửa: copy xong thì chown luôn, rồi mới USER spring
+#  Sửa: copy xong thì chown luôn, rồi mới USER spring
 COPY --from=builder /app/target/*.jar app.jar
 RUN chown spring:spring app.jar
 

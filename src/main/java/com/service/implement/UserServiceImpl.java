@@ -18,7 +18,6 @@ import com.service.MailService;
 import com.service.OTPCodeService;
 import com.service.UserAccountService;
 import jakarta.mail.MessagingException;
-import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -39,7 +38,6 @@ import org.springframework.web.client.RestTemplate;
 import java.util.*;
 import java.util.stream.Collectors;
 
-
 @Service
 public class UserServiceImpl implements UserDetailsService, UserAccountService {
 
@@ -53,10 +51,10 @@ public class UserServiceImpl implements UserDetailsService, UserAccountService {
     private final UserAccountMapper userAccountMapper;
 
     public UserServiceImpl(UserAccountRepo userAccountRepo,
-                           UserRoleRepo userRoleRepo, TokenProvider tokenProvider,
-                           OTPCodeService otpCodeService,
-                           MailService mailService, PasswordEncoder passwordEncoder,
-                           UserAccountMapper userAccountMapper) {
+            UserRoleRepo userRoleRepo, TokenProvider tokenProvider,
+            OTPCodeService otpCodeService,
+            MailService mailService, PasswordEncoder passwordEncoder,
+            UserAccountMapper userAccountMapper) {
         this.userAccountRepo = userAccountRepo;
         this.userRoleRepo = userRoleRepo;
         this.tokenProvider = tokenProvider;
@@ -73,11 +71,11 @@ public class UserServiceImpl implements UserDetailsService, UserAccountService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Optional<User> user = userAccountRepo.findByUsername(username);
 
-        if(user.isEmpty()){
-            user=userAccountRepo.findByEmail(username);
+        if (user.isEmpty()) {
+            user = userAccountRepo.findByEmail(username);
         }
-        if(user.isEmpty()) throw new UserAccountException("Not found");
-
+        if (user.isEmpty())
+            throw new UserAccountException("Not found");
 
         Set<GrantedAuthority> authorities = userRoleRepo.findByUser(user.get()).stream()
                 .map(ur -> new SimpleGrantedAuthority(ur.getRole().getName()))
@@ -91,18 +89,17 @@ public class UserServiceImpl implements UserDetailsService, UserAccountService {
                 authorities);
     }
 
-
     @Transactional
     public User save(User user) {
         return userAccountRepo.save(user);
     }
 
     public User findById(long id) throws UserAccountException {
-        Optional<User> result= userAccountRepo.findByIdWithRole(id);
-        if(result.isPresent()){
+        Optional<User> result = userAccountRepo.findByIdWithRole(id);
+        if (result.isPresent()) {
             return result.get();
         }
-        throw new UserAccountException("User not found : "+id);
+        throw new UserAccountException("User not found : " + id);
     }
 
     @Override
@@ -140,33 +137,31 @@ public class UserServiceImpl implements UserDetailsService, UserAccountService {
 
         // 2. Build verify link
         String verifyLink = String.format(
-                domain+"/api/auth/auth-account?email=%s&key=%s",
+                domain + "/api/auth/auth-account?email=%s&key=%s",
                 request.getEmail(),
-                otp
-        );
+                otp);
 
         // 3. Email content (HTML)
         String content = """
-            <h3>Xác thực tài khoản</h3>
-            <p>Vui lòng click vào link bên dưới để xác thực tài khoản:</p>
-            <a href="%s">Xác thực tài khoản</a>
-            <p>Link có hiệu lực trong 5 phút.</p>
-            """.formatted(verifyLink);
+                <h3>Xác thực tài khoản</h3>
+                <p>Vui lòng click vào link bên dưới để xác thực tài khoản:</p>
+                <a href="%s">Xác thực tài khoản</a>
+                <p>Link có hiệu lực trong 5 phút.</p>
+                """.formatted(verifyLink);
 
         // 4. Send mail
         mailService.sendEmail(
                 request.getEmail(),
                 "Xác thực tài khoản",
                 content,
-                null
-        );
+                null);
 
         return userAccountRepo.save(newUserAccount);
     }
 
     @Override
     public AuthRespone authAccount(String email, String key) {
-        OTPCode otp=otpCodeService.findOTPCode(email, key);
+        OTPCode otp = otpCodeService.findOTPCode(email, key);
 
         if (otp == null) {
             return null;
@@ -175,21 +170,22 @@ public class UserServiceImpl implements UserDetailsService, UserAccountService {
         userAccountRepo.activateUserByEmail(email);
 
         CustomUserDetails userDetails = (CustomUserDetails) loadUserByUsername(email);
-        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null,
+                userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt=tokenProvider.genarateToken(authentication);
+        String jwt = tokenProvider.genarateToken(authentication);
 
-        AuthRespone res=new AuthRespone(jwt,true);
+        AuthRespone res = new AuthRespone(jwt, true);
 
         return res;
     }
 
     @Override
     public AuthRespone login(LoginRequest rq) {
-        Authentication authentication=authenticate(rq.getUsername(),rq.getPassword());
+        Authentication authentication = authenticate(rq.getUsername(), rq.getPassword());
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt=tokenProvider.genarateToken(authentication);
-        AuthRespone res=new AuthRespone(jwt,true);
+        String jwt = tokenProvider.genarateToken(authentication);
+        AuthRespone res = new AuthRespone(jwt, true);
         return res;
     }
 
@@ -207,28 +203,27 @@ public class UserServiceImpl implements UserDetailsService, UserAccountService {
                 User find_user = findByEmail(email);
                 System.out.println(find_user);
 
-                if(find_user==null){
+                if (find_user == null) {
                     String randNumber = String.valueOf(100000000 + new Random().nextLong(899999999));
-                    String enPass = passwordEncoder.encode(email+randNumber);
+                    String enPass = passwordEncoder.encode(email + randNumber);
 
                     // 3. Email content (HTML)
                     String content = """
-                    <h3>Mật khẩu tài khoản</h3>
-                    <p>Bạn đã đăng nhập bằng Google của web chúng tôi</p>
-                    <a href="%s">Shop Anbato</a>
-                    <p>Hãy vào hồ sơ người dùng để đổi mật khẩu</p>
-                    <p>Mật khẩu mặc định của bạn là "%s"</p>
-                    """.formatted(domain,email+randNumber);
+                            <h3>Mật khẩu tài khoản</h3>
+                            <p>Bạn đã đăng nhập bằng Google của web chúng tôi</p>
+                            <a href="%s">Shop Anbato</a>
+                            <p>Hãy vào hồ sơ người dùng để đổi mật khẩu</p>
+                            <p>Mật khẩu mặc định của bạn là "%s"</p>
+                            """.formatted(domain, email + randNumber);
 
                     // 4. Send mail
                     mailService.sendEmail(
                             email,
                             "Mật khẩu tài khoản",
                             content,
-                            null
-                    );
+                            null);
 
-                    User newUser=User.builder()
+                    User newUser = User.builder()
                             .username(email)
                             .email(email)
                             .fullName(name)
@@ -245,18 +240,18 @@ public class UserServiceImpl implements UserDetailsService, UserAccountService {
                             newUser.getPassword(),
                             email,
                             authorities);
-                    Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
+                    Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null,
+                            authorities);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                    String jwt=tokenProvider.genarateToken(authentication);
-                    AuthRespone res=new AuthRespone(jwt,true);
+                    String jwt = tokenProvider.genarateToken(authentication);
+                    AuthRespone res = new AuthRespone(jwt, true);
                     return res;
-                }
-                else{
-                    Authentication authentication=authenticate(email);
+                } else {
+                    Authentication authentication = authenticate(email);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
-                    String jwt=tokenProvider.genarateToken(authentication);
-                    AuthRespone res=new AuthRespone(jwt,true);
+                    String jwt = tokenProvider.genarateToken(authentication);
+                    AuthRespone res = new AuthRespone(jwt, true);
                     return res;
                 }
 
@@ -271,12 +266,12 @@ public class UserServiceImpl implements UserDetailsService, UserAccountService {
     @Override
     public boolean changePass(ChangePasswordRequest request) {
         Long accountId = ((Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-        User user= findById(accountId);
+        User user = findById(accountId);
 
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
             throw new UserAccountException("Mật khẩu cũ không đúng");
         } else {
-            String newHashPass=passwordEncoder.encode(request.getNewPassword());
+            String newHashPass = passwordEncoder.encode(request.getNewPassword());
             user.setPassword(newHashPass);
             userAccountRepo.save(user);
             return true;
@@ -286,17 +281,18 @@ public class UserServiceImpl implements UserDetailsService, UserAccountService {
     @Override
     public UserAccountDTO getProfile(long id) {
         System.out.println(id);
-        Optional<User> userAccount=userAccountRepo.findByIdWithRole(id);
-        if(userAccount.isPresent()){
+        Optional<User> userAccount = userAccountRepo.findByIdWithRole(id);
+        if (userAccount.isPresent()) {
             return userAccountMapper.toDto(userAccount.get());
-        }
-        else throw new UserAccountException("Not found!");
+        } else
+            throw new UserAccountException("Not found!");
     }
 
     @Override
     public UserAccountDTO updateInfo(UpdateUserInfoRequest request) {
         Long myId = ((Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-        User userAccount=userAccountRepo.findByIdWithRole(myId).orElseThrow(()-> new UnauthorizedException("Invalid user!"));
+        User userAccount = userAccountRepo.findByIdWithRole(myId)
+                .orElseThrow(() -> new UnauthorizedException("Invalid user!"));
 
         System.out.println(request.getFullName());
         System.out.println(request.getDob());
@@ -310,7 +306,8 @@ public class UserServiceImpl implements UserDetailsService, UserAccountService {
     @Override
     public UserAccountDTO updateAvt(String url) {
         Long myId = ((Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-        User userAccount=userAccountRepo.findByIdWithRole(myId).orElseThrow(()-> new UnauthorizedException("Invalid user!"));
+        User userAccount = userAccountRepo.findByIdWithRole(myId)
+                .orElseThrow(() -> new UnauthorizedException("Invalid user!"));
 
         userAccount.setAvt(url);
         userAccountRepo.save(userAccount);
@@ -319,7 +316,7 @@ public class UserServiceImpl implements UserDetailsService, UserAccountService {
     }
 
     public Page<User> findAll(int page, int size) {
-        return userAccountRepo.findAll(PageRequest.of(page,size, Sort.by("userId")));
+        return userAccountRepo.findAll(PageRequest.of(page, size, Sort.by("userId")));
     }
 
     @Transactional
@@ -332,46 +329,54 @@ public class UserServiceImpl implements UserDetailsService, UserAccountService {
         return userAccountRepo.findByEmail(email).orElse(null);
     }
 
-
     public User findByUsername(String username) {
-        Optional<User> result= userAccountRepo.findByUsername(username);
+        Optional<User> result = userAccountRepo.findByUsername(username);
         return result.orElse(null);
     }
 
     @Override
     public List<User> searchUser(String query) {
-        List<User> listUser=userAccountRepo.searchUser(query);
+        List<User> listUser = userAccountRepo.searchUser(query);
         return listUser;
     }
 
-    public Authentication authenticate(String username,String password){
-        try{
-            CustomUserDetails userDetails=(CustomUserDetails) loadUserByUsername(username);
+    public Authentication authenticate(String username, String password) {
+        try {
+            CustomUserDetails userDetails = (CustomUserDetails) loadUserByUsername(username);
 
-            if(userDetails==null){
+            if (userDetails == null) {
                 throw new UserAccountException("Invalid user");
             }
-            if(!passwordEncoder.matches(password,userDetails.getPassword())){
+            if (!passwordEncoder.matches(password, userDetails.getPassword())) {
                 throw new UserAccountException("Invalid password or username");
             }
-            return new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
-        }catch (UsernameNotFoundException e){
+            return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        } catch (UsernameNotFoundException e) {
             throw new UserAccountException("Invalid user");
         }
 
     }
 
-    public Authentication authenticate(String username){
+    public Authentication authenticate(String username) {
         try {
-            CustomUserDetails userDetails=(CustomUserDetails) loadUserByUsername(username);
+            CustomUserDetails userDetails = (CustomUserDetails) loadUserByUsername(username);
 
-            if(userDetails==null){
+            if (userDetails == null) {
                 throw new UserAccountException("Invalid user");
             }
-            return new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
-        }catch (UsernameNotFoundException e){
+            return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        } catch (UsernameNotFoundException e) {
             throw new UserAccountException("Invalid user");
         }
 
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public List<UserAccountDTO> getNewUsers() {
+        java.time.LocalDateTime startWeek = java.time.LocalDateTime.now().toLocalDate().with(java.time.DayOfWeek.MONDAY)
+                .atStartOfDay();
+        List<User> users = userAccountRepo.findAllNewUsers();
+        return userAccountMapper.toDtos(users);
     }
 }

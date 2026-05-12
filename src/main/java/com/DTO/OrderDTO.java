@@ -20,6 +20,8 @@ public class OrderDTO {
     private Double subtotal;
     private Double shippingFee;
     private Double discount;
+    private String couponCode;
+    private String couponDetails;
     private Double total;
     private Order.OrderStatus status;
     private PaymentTransaction.PaymentMethod paymentMethod;

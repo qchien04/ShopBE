@@ -23,20 +23,31 @@ public class OrderService {
     private final ProductVariantRepository productVariantRepository;
     private final ProductRepository productRepository;
     private final OrderMapper orderMapper;
+    private final CouponService couponService;
 
     public List<OrderDTO> getAllOrders() {
         List<Order> list=orderRepository.findAllWithFullInfo();
         return orderMapper.toDtos(list);
     }
 
-    public Order getOrderById(Long id) {
-        return orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+    @Transactional(readOnly = true)
+    public OrderDTO getOrderById(Long id) {
+        return orderMapper.toDto(findEntityById(id));
     }
 
-    public Order getOrderByOrderNumber(String orderNumber) {
+    @Transactional(readOnly = true)
+    public OrderDTO getOrderByOrderNumber(String orderNumber) {
+        return orderMapper.toDto(findEntityByNumber(orderNumber));
+    }
+
+    private Order findEntityById(Long id) {
+        return orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found: " + id));
+    }
+
+    private Order findEntityByNumber(String orderNumber) {
         return orderRepository.findByOrderNumber(orderNumber)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new RuntimeException("Order not found: " + orderNumber));
     }
 
     public List<OrderDTO> getOrdersByUserId() {
@@ -44,13 +55,29 @@ public class OrderService {
         return orderMapper.toDtos(orderRepository.findFullInfoByUserId(myId));
     }
 
+    public List<OrderDTO> getOrdersByUserId(Long myId) {
+        return orderMapper.toDtos(orderRepository.findFullInfoByUserId(myId));
+    }
+
     @Transactional
     public OrderDTO createOrder(OrderRequest request) {
         Long myId = ((Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        return createOrder(request, myId);
+    }
 
+    @Transactional
+    public OrderDTO createOrder(OrderRequest request, Long myId) {
         CustomerAddress customerAddress=customerAddressRepository.findByIdAndUserId(request.getAddressId(),myId)
                 .orElseThrow(()->new NotFoundObjectRequestException("Không tồn tại địa chỉ!"));
 
+        List <OrderRequest.Item> items= request.getItems();
+        List<Long> productIds=new ArrayList<>();
+        for(OrderRequest.Item item:items){
+            productIds.add(item.getProductVariantId());
+        }
+        List<ProductVariant> products=productVariantRepository.findAllById(productIds);
+        List<ProductVariant> updatedProducts = new ArrayList<>();
+        
         String orderNumber = generateOrderNumber();
 
         Order newOrder=Order.builder()
@@ -60,20 +87,12 @@ public class OrderService {
                 .customerPhone(customerAddress.getPhone())
                 .shippingAddress(customerAddress.getDetailAddress())
                 .shippingFee(20000.0)
-                .discount(20000.0)
                 .status(Order.OrderStatus.PROCESSING)
                 .paymentMethod(request.getPaymentMethod())
                 .paymentStatus(PaymentTransaction.PaymentStatus.UNPAID)
                 .note("Ok")
                 .build();
 
-        List <OrderRequest.Item> items= request.getItems();
-        List<Long> productIds=new ArrayList<>();
-        for(OrderRequest.Item item:items){
-            productIds.add(item.getProductVariantId());
-        }
-        List<ProductVariant> products=productVariantRepository.findAllById(productIds);
-        List<ProductVariant> updatedProducts = new ArrayList<>();
         double subTotal=0.0;
         newOrder.setItems(new HashSet<>());
         for(OrderRequest.Item item:items){
@@ -103,11 +122,30 @@ public class OrderService {
         }
         productVariantRepository.saveAll(updatedProducts);
 
+        double couponDiscount = 0.0;
+        String couponDetails = null;
+        if (request.getCouponCode() != null && !request.getCouponCode().isBlank()) {
+            Coupon coupon = couponService.validateCoupon(request.getCouponCode(), subTotal);
+            couponDiscount = couponService.calculateDiscount(coupon, subTotal);
+            couponService.useCoupon(request.getCouponCode());
+            
+            couponDetails = String.format("Giảm %s%s%s%s",
+                    coupon.getDiscountType() == com.entity.Coupon.DiscountType.PERCENTAGE ? coupon.getDiscountValue() : String.format("%,.0f", coupon.getDiscountValue()),
+                    coupon.getDiscountType() == com.entity.Coupon.DiscountType.PERCENTAGE ? "%" : "₫",
+                    (coupon.getMaxDiscountAmount() != null && coupon.getMaxDiscountAmount() > 0) ? " (Tối đa " + String.format("%,.0f", coupon.getMaxDiscountAmount()) + "₫)" : "",
+                    (coupon.getMinOrderValue() != null && coupon.getMinOrderValue() > 0) ? " - Đơn từ " + String.format("%,.0f", coupon.getMinOrderValue()) + "₫" : ""
+            );
+        }
+
+        double totalDiscount = couponDiscount;
+        newOrder.setDiscount(totalDiscount);
+        newOrder.setCouponCode(request.getCouponCode());
+        newOrder.setCouponDetails(couponDetails);
         newOrder.setSubtotal(subTotal);
-        newOrder.setTotal(subTotal+ newOrder.getShippingFee() - newOrder.getDiscount());
+        double finalTotal = subTotal + newOrder.getShippingFee() - totalDiscount;
+        newOrder.setTotal(Math.max(0.0, finalTotal));
 
         newOrder = orderRepository.save(newOrder);
-
 
         return orderMapper.toDto(newOrder);
     }
@@ -119,21 +157,21 @@ public class OrderService {
 
     @Transactional
     public Order updatePaymentStatus(Long id, PaymentTransaction.PaymentStatus status) {
-        Order order = getOrderById(id);
+        Order order = findEntityById(id);
         order.setPaymentStatus(status);
         return orderRepository.save(order);
     }
 
     @Transactional
     public Order updatePaymentStatus(String orderNumber, PaymentTransaction.PaymentStatus status) {
-        Order order = getOrderByOrderNumber(orderNumber);
+        Order order = findEntityByNumber(orderNumber);
         order.setPaymentStatus(status);
         return orderRepository.save(order);
     }
 
     @Transactional
     public OrderDTO updateOrderStatus(Long id, UpdateOrderStatusRequest status) {
-        Order order = getOrderById(id);
+        Order order = findEntityById(id);
         order.setStatus(status.getStatus());
         Order no= orderRepository.save(order);
 
@@ -142,7 +180,7 @@ public class OrderService {
 
     @Transactional
     public void cancelOrder(Long id) {
-        Order order = getOrderById(id);
+        Order order = findEntityById(id);
         order.setStatus(Order.OrderStatus.CANCELLED);
         orderRepository.save(order);
     }
