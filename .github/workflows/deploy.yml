@@ -93,7 +93,8 @@ jobs:
             docker exec -i pgvector-db psql -U $POSTGRES_USER $POSTGRES_DB < shop_backup.sql
             
             echo $POSTGRES_USER
-            
+            echo "POSTGRES_USER=$POSTGRES_USER"
+            echo "POSTGRES_DB=$POSTGRES_DB"
             # Pull image mới và restart backend
             docker compose pull backend
             docker compose up -d --no-deps --force-recreate backend
