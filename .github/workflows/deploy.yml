@@ -92,6 +92,8 @@ jobs:
             docker exec pgvector-db psql -U $POSTGRES_USER $POSTGRES_DB -c "CREATE SCHEMA public;"
             docker exec -i pgvector-db psql -U $POSTGRES_USER $POSTGRES_DB < shop_backup.sql
             
+            echo $POSTGRES_USER
+            
             # Pull image mới và restart backend
             docker compose pull backend
             docker compose up -d --no-deps --force-recreate backend
