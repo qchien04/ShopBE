@@ -9,4 +9,5 @@ public class CreateCategoryRequest {
     private String icon;
     private String image;
     private Boolean active = true;
+    private Long parentId;
 }

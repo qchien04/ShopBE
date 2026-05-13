@@ -46,6 +46,14 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
+    public List<PostDTO> getByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return new ArrayList<>();
+        return postRepository.findAllById(ids).stream()
+                .map(postMapper::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<PostDTO> getPre() {
         Pageable pageable = PageRequest.of(0, 4);
         Page<Post> posts=postRepository.findAll(pageable);

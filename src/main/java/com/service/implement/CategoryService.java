@@ -51,6 +51,12 @@ public class CategoryService {
                 .icon(r.getIcon())
                 .active(true)
                 .build();
+
+        if (r.getParentId() != null) {
+            Category parent = getCategoryById(r.getParentId());
+            category.setParent(parent);
+        }
+
         return categoryRepository.save(category);
     }
 
@@ -63,6 +69,17 @@ public class CategoryService {
         category.setSlug(request.getSlug());
         category.setIcon(request.getIcon());
         category.setActive(request.getActive());
+
+        if (request.getParentId() != null) {
+            if (request.getParentId().equals(id)) {
+                throw new RuntimeException("Category cannot be its own parent");
+            }
+            Category parent = getCategoryById(request.getParentId());
+            category.setParent(parent);
+        } else {
+            category.setParent(null);
+        }
+
         return categoryRepository.save(category);
     }
 

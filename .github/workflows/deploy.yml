@@ -54,7 +54,7 @@ jobs:
             set -e
 
             WORK_DIR="/home/shopbe/shop-backend"
-            REPO_URL="https://x-access-token:${{ secrets.GH_PAT }}@github.com/qchien04/ShopBE.git"
+            REPO_URL="https://github.com/qchien04/ShopBE.git"
 
             mkdir -p $WORK_DIR
             cd $WORK_DIR

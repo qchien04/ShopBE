@@ -4,6 +4,7 @@ import com.DTO.PostDTO;
 import com.entity.Post;
 import com.request.PostRequest;
 import com.service.PostService;
+import com.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.http.ResponseEntity;
@@ -12,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -25,14 +25,33 @@ public class PostController {
     private final PostService postService;
 
     @GetMapping
-    public ResponseEntity<Page<PostDTO>> getAll(
+    public ResponseEntity<PageResponse<PostDTO>> getAll(
+            @RequestParam(required = false) List<Long> ids,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String keyword
     ) {
-        return ResponseEntity.ok(postService.getAll(page, size, status, category, keyword));
+        if (ids != null && !ids.isEmpty()) {
+            List<PostDTO> postDTOS = postService.getByIds(ids);
+            return ResponseEntity.ok(new PageResponse<>(
+                    postDTOS,
+                    0,
+                    postDTOS.size(),
+                    (long) postDTOS.size(),
+                    1
+            ));
+        }
+
+        Page<PostDTO> dtoPage = postService.getAll(page, size, status, category, keyword);
+        return ResponseEntity.ok(new PageResponse<>(
+                dtoPage.getContent(),
+                dtoPage.getNumber(),
+                dtoPage.getSize(),
+                dtoPage.getTotalElements(),
+                dtoPage.getTotalPages()
+        ));
     }
 
     @GetMapping("/pretent")

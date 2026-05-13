@@ -9,4 +9,5 @@ public class UpdateCategoryRequest {
     private String image;
     private String icon;
     private Boolean active = true;
+    private Long parentId;
 }
