@@ -74,7 +74,7 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             fi
-
+            
             rsync -av --ignore-existing uploads/ $WORK_DIR/uploads/ 2>/dev/null || true
 
             docker compose up -d postgres
