@@ -216,7 +216,7 @@ public class ProductRagService {
             if (response != null) {
                 // Hỗ trợ thêm các metadata cần thiết cho FE nếu Agent không trả về đủ
                 response.setAvailableAddresses(getAddressesForCurrentCustomer());
-                response.setAvailablePaymentMethods(List.of("COD", "BANK_TRANSFER", "VNPAY", "MOMO"));
+                response.setAvailablePaymentMethods(List.of("COD", "BANK_TRANSFER"));
             }
 
             return response;
