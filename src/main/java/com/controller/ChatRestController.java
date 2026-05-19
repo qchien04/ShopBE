@@ -1,6 +1,7 @@
 package com.controller;
 
 import com.DTO.ChatRoomDTO;
+import com.DTO.MessagePayload;
 import com.constant.RoomStatus;
 import com.entity.ChatMessage;
 import com.entity.ChatRoom;
@@ -29,6 +30,7 @@ public class ChatRestController {
     public List<ChatRoomDTO> getRooms() {
         return chatService.getRoomsByStatus();
     }
+
     // Đánh dấu đã đọc
     @PatchMapping("/rooms/{roomId}/read")
     public void markAsRead(@PathVariable Long roomId, @RequestParam Long userId) {
@@ -37,7 +39,7 @@ public class ChatRestController {
 
     @PostMapping("/start")
     public ChatRoomDTO startRoom(@RequestBody Map<String, Long> body) {
-        ChatRoomDTO room=chatService.createRoom(body.get("customerId"));
+        ChatRoomDTO room = chatService.createRoom(body.get("customerId"));
         return room;
     }
 
@@ -45,4 +47,21 @@ public class ChatRestController {
     public ChatRoom acceptRoom(@RequestBody Map<String, Long> body) {
         return chatService.assignStaff(body.get("roomId"), body.get("staffId"));
     }
+
+    // Lưu tin nhắn AI vào room (được gọi khi chuyển sang chế độ nhân viên)
+    @PostMapping("/rooms/{roomId}/ai-history")
+    public void saveAiHistory(@PathVariable Long roomId,
+                               @RequestBody List<Map<String, String>> messages) {
+        chatService.saveAiHistory(roomId, messages);
+    }
+
+    // Lưu 1 tin nhắn AI realtime vào room
+    @PostMapping("/rooms/{roomId}/ai-message")
+    public ChatMessage saveAiMessage(@PathVariable Long roomId,
+                                      @RequestBody Map<String, String> body) {
+        String role = body.getOrDefault("role", "AI");
+        String content = body.get("content");
+        return chatService.saveAiMessage(roomId, role, content);
+    }
 }
+

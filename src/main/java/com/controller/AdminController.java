@@ -1,6 +1,6 @@
 package com.controller;
 
-import com.DTO.BannerConfigDTO;
+import com.DTO.HomePageConfigDTO;
 import com.DTO.ReviewDTO;
 import com.DTO.dashboard.DashboardDTO;
 import com.entity.Order;
@@ -38,13 +38,13 @@ public class AdminController {
 
     // Public — FE homepage gọi
     @GetMapping("/configs/banner")
-    public ResponseEntity<BannerConfigDTO> getBanner() {
+    public ResponseEntity<HomePageConfigDTO> getBanner() {
         return ResponseEntity.ok(configService.getBannerConfig());
     }
 
     // Admin only — BannerManager gọi khi nhấn "Lưu tất cả"
     @PostMapping("/configs/banner")
-    public ResponseEntity<BannerConfigDTO> saveBanner(@RequestBody BannerConfigDTO dto) {
+    public ResponseEntity<HomePageConfigDTO> saveBanner(@RequestBody HomePageConfigDTO dto) {
         return ResponseEntity.ok(configService.saveBannerConfig(dto));
     }
 

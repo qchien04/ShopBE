@@ -29,14 +29,14 @@ public class Post {
 
     private String thumbnail;
 
-    @Column(columnDefinition = "TEXT") //html
+    @Column(columnDefinition = "TEXT") // html
     private String content;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private PostStatus status;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "post_tags", joinColumns = @JoinColumn(name = "post_id"))
     @Column(name = "tag")
     private List<String> tags;

@@ -26,7 +26,7 @@ public class Category {
     private String slug;
     private String image;
 
-    private Boolean active = true;
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")

@@ -15,11 +15,9 @@ public class CreateProductRequest {
     private Double price;
     private Double salePrice;
     private Integer stockQuantity = 0;
-    private String status;
     private String mainImage;
     private Long categoryId;
     private Long brandId;
-    private Boolean featured;
     private List<Long> imageIds;
     private List<ProductVariantDTO> productVariants;
 }

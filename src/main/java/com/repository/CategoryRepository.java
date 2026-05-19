@@ -15,13 +15,11 @@ import java.util.Optional;
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {
     Optional<Category> findBySlug(String slug);
-    List<Category> findByActiveTrue();
-
     @Query("SELECT c FROM Category c WHERE c.parent.id is NULL")
     @EntityGraph(attributePaths = {"children"})
     List<Category> findAllParent();
 
-    @Query("SELECT c FROM Category c WHERE c.parent.id = :parentId AND c.active = true")
+    @Query("SELECT c FROM Category c WHERE c.parent.id = :parentId")
     List<Category> findChildrenByParentId(Long parentId);
 
     @Query(value = """

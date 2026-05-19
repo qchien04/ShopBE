@@ -22,5 +22,5 @@ public class FeaturedProductDTO {
     private Double salePrice;
     private Integer stockQuantity;
     private Integer soldCount;
-    private Product.ProductStatus status;
+
 }

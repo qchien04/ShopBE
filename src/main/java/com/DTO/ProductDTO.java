@@ -22,8 +22,7 @@ public class ProductDTO {
     private String mainImage;
     private CategoryDTO category;
     private Brand brand;
-    private Product.ProductStatus status;
-    private Boolean featured = false;
+
     private Integer viewCount = 0;
     private Integer soldCount = 0;
     private Set<ProductImageDTO> images;

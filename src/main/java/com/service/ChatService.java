@@ -118,4 +118,54 @@ public class ChatService {
     public int countUnread(Long roomId) {
         return messageRepository.countByRoomIdAndIsReadFalse(roomId);
     }
-}
+
+    // ─── AI MESSAGES ─────────────────────────────────────────
+
+    /**
+     * Lưu toàn bộ lịch sử chat AI vào room khi khách chuyển sang nhân viên.
+     * messages: list of {role: "USER"|"AI", content: "..."}
+     */
+    @Transactional
+    public void saveAiHistory(Long roomId, List<java.util.Map<String, String>> messages) {
+        ChatRoom room = getRoomById(roomId);
+        for (java.util.Map<String, String> entry : messages) {
+            String role = entry.getOrDefault("role", "AI");
+            String content = entry.get("content");
+            if (content == null || content.isBlank()) continue;
+
+            String senderRole = role.equalsIgnoreCase("USER") ? "CUSTOMER" : "AI";
+            ChatMessage msg = ChatMessage.builder()
+                    .roomId(roomId)
+                    .senderId(role.equalsIgnoreCase("USER") ? room.getCustomer().getId() : null)
+                    .senderRole(senderRole)
+                    .content(content)
+                    .isRead(true)
+                    .sentAt(LocalDateTime.now())
+                    .build();
+            messageRepository.save(msg);
+        }
+    }
+
+    /**
+     * Lưu 1 tin nhắn AI đơn lẻ (dùng để lưu realtime khi đang trong chế độ AI).
+     */
+    @Transactional
+    public ChatMessage saveAiMessage(Long roomId, String role, String content) {
+        ChatRoom room = getRoomById(roomId);
+        Long senderId = role.equalsIgnoreCase("CUSTOMER") || role.equalsIgnoreCase("USER")
+                ? room.getCustomer().getId()
+                : null;
+        String senderRole = role.equalsIgnoreCase("USER") || role.equalsIgnoreCase("CUSTOMER")
+                ? "CUSTOMER" : "AI";
+
+        ChatMessage msg = ChatMessage.builder()
+                .roomId(roomId)
+                .senderId(senderId)
+                .senderRole(senderRole)
+                .content(content)
+                .isRead(false)
+                .sentAt(LocalDateTime.now())
+                .build();
+        return messageRepository.save(msg);
+    }
+}

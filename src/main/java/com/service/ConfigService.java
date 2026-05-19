@@ -1,6 +1,6 @@
 package com.service;
 
-import com.DTO.BannerConfigDTO;
+import com.DTO.HomePageConfigDTO;
 import com.entity.Config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.repository.ConfigRepository;
@@ -16,19 +16,19 @@ public class ConfigService {
 
     private static final String BANNER_KEY = "banner";
 
-    public BannerConfigDTO getBannerConfig() {
+    public HomePageConfigDTO getBannerConfig() {
         return configRepository.findByConfigKey(BANNER_KEY)
                 .map(c -> {
                     try {
-                        return objectMapper.readValue(c.getConfigValue(), BannerConfigDTO.class);
+                        return objectMapper.readValue(c.getConfigValue(), HomePageConfigDTO.class);
                     } catch (Exception e) {
-                        return new BannerConfigDTO();
+                        return new HomePageConfigDTO();
                     }
                 })
-                .orElse(new BannerConfigDTO()); // trả về rỗng → FE dùng fallback
+                .orElse(new HomePageConfigDTO()); // trả về rỗng → FE dùng fallback
     }
 
-    public BannerConfigDTO saveBannerConfig(BannerConfigDTO dto) {
+    public HomePageConfigDTO saveBannerConfig(HomePageConfigDTO dto) {
         try {
             String json = objectMapper.writeValueAsString(dto);
             Config config = configRepository.findByConfigKey(BANNER_KEY)

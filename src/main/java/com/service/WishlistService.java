@@ -69,7 +69,7 @@ public class WishlistService {
                 p.getMainImage(),
                 p.getPrice(),
                 p.getSalePrice(),
-                p.getStatus().name(),
+                (p.getStockQuantity() != null && p.getStockQuantity() > 0) ? "PUBLISHED" : "OUT_OF_STOCK",
                 w.getAddedAt()
         );
     }

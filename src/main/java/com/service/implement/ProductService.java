@@ -187,10 +187,7 @@ public class ProductService {
         return products.map(productMapper::toDto);
     }
 
-    public List<ProductDTO> getFeaturedProducts() {
-        List<Product> products = productRepository.findByFeaturedTrue();
-        return productMapper.toDtos(products);
-    }
+
 
     @Transactional
     public Page<ProductDTO> searchProducts(String keyword, int page, int size, long minPrice,
@@ -223,16 +220,7 @@ public class ProductService {
                 .mainImage(request.getMainImage())
                 .category(category)
                 .brand(brand)
-                .featured(request.getFeatured())
                 .build();
-
-        Product.ProductStatus status;
-        try {
-            status = Product.ProductStatus.valueOf(request.getStatus().toUpperCase());
-            newProduct.setStatus(status);
-        } catch (Exception e) {
-            throw new InvalidRequestException("Invalid product status");
-        }
 
         if (request.getProductVariants() != null && !request.getProductVariants().isEmpty()) {
             List<ProductVariantDTO> va = request.getProductVariants();
@@ -294,16 +282,6 @@ public class ProductService {
         product.setMainImage(request.getMainImage());
         product.setCategory(category);
         product.setBrand(brand);
-        product.setFeatured(request.getFeatured());
-
-        Product.ProductStatus status;
-
-        try {
-            product.setStatus(
-                    Product.ProductStatus.valueOf(request.getStatus().toUpperCase()));
-        } catch (Exception e) {
-            throw new InvalidRequestException("Invalid product status");
-        }
 
         product.getProductVariants().clear();
         if (request.getProductVariants() != null) {

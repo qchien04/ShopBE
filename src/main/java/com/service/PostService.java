@@ -47,7 +47,8 @@ public class PostService {
 
     @Transactional(readOnly = true)
     public List<PostDTO> getByIds(List<Long> ids) {
-        if (ids == null || ids.isEmpty()) return new ArrayList<>();
+        if (ids == null || ids.isEmpty())
+            return new ArrayList<>();
         return postRepository.findAllById(ids).stream()
                 .map(postMapper::toResponse)
                 .toList();
@@ -56,11 +57,11 @@ public class PostService {
     @Transactional(readOnly = true)
     public List<PostDTO> getPre() {
         Pageable pageable = PageRequest.of(0, 4);
-        Page<Post> posts=postRepository.findAll(pageable);
+        Page<Post> posts = postRepository.findAll(pageable);
 
-        List<PostDTO> postDTOS=new ArrayList<>();
+        List<PostDTO> postDTOS = new ArrayList<>();
 
-        for(Post post:posts.stream().toList()){
+        for (Post post : posts.stream().toList()) {
             post.getTags().size();
             postDTOS.add(postMapper.toResponse(post));
         }
@@ -70,11 +71,11 @@ public class PostService {
     @Transactional(readOnly = true)
     public List<PostDTO> getPopular() {
         Pageable pageable = PageRequest.of(0, 6);
-        Page<Post> posts=postRepository.findAll(pageable);
+        Page<Post> posts = postRepository.findAll(pageable);
 
-        List<PostDTO> postDTOS=new ArrayList<>();
+        List<PostDTO> postDTOS = new ArrayList<>();
 
-        for(Post post:posts.stream().toList()){
+        for (Post post : posts.stream().toList()) {
             post.getTags().size();
             postDTOS.add(postMapper.toResponse(post));
         }
@@ -84,17 +85,16 @@ public class PostService {
     @Transactional(readOnly = true)
     public List<PostDTO> getRand() {
 
-        List<Post> posts=postRepository.findRandomPosts();
+        List<Post> posts = postRepository.findRandomPosts();
 
-        List<PostDTO> postDTOS=new ArrayList<>();
+        List<PostDTO> postDTOS = new ArrayList<>();
 
-        for(Post post:posts){
+        for (Post post : posts) {
             post.getTags().size();
             postDTOS.add(postMapper.toResponse(post));
         }
         return postDTOS;
     }
-
 
     /** Lấy chi tiết bài viết */
     @Transactional(readOnly = true)

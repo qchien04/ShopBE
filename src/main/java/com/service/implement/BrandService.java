@@ -79,7 +79,6 @@ public class BrandService {
                 .description(r.getDescription())
                 .logo(r.getLogo())
                 .website(r.getWebsite())
-                .active(r.getActive())
                 .build();
         return brandRepository.save(brand);
     }
@@ -92,7 +91,6 @@ public class BrandService {
         brand.setLogo(request.getLogo());
         brand.setWebsite(request.getWebsite());
         brand.setSlug(request.getSlug());
-        brand.setActive(request.getActive());
         return brandRepository.save(brand);
     }
 

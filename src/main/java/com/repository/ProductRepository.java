@@ -20,8 +20,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
 
     Optional<Product> findBySku(String sku);
-    List<Product> findByStatus(Product.ProductStatus status);
-    List<Product> findByFeaturedTrue(); 
     List<Product> findByCategoryId(Long categoryId);
     List<Product> findByBrandId(Long brandId);
 
@@ -72,8 +70,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("""
         SELECT p FROM Product p
-        WHERE p.status = 'PUBLISHED'
-          AND p.category.id IN :categoryIds
+        WHERE p.category.id IN :categoryIds
           AND (:brandIds IS NULL OR p.brand.id IN :brandIds)
           AND p.salePrice BETWEEN :minPrice AND :maxPrice
         ORDER BY
@@ -117,8 +114,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("""
         SELECT MIN(p.salePrice), MAX(p.salePrice)
         FROM Product p
-        WHERE p.status = 'PUBLISHED'
-          AND p.category.id IN :categoryIds
+        WHERE p.category.id IN :categoryIds
     """)
     List<Object[]> findMinAndMaxPrice(List<Long> categoryIds);
 
@@ -126,7 +122,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
         SELECT p
         FROM Product p 
         WHERE p.category.id IN :categoryIds
-          AND p.status = 'PUBLISHED'
     """)
     List<Product> findByCategoryIds(List<Long> categoryIds);
 
@@ -135,24 +130,20 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                MAX(COALESCE(p.salePrice, p.price))
         FROM Product p
         WHERE p.brand.id = :brandId
-          AND p.status = 'PUBLISHED'
     """)
     List<Object[]> findMinAndMaxPriceByBrand(Long brandId);
 
     // Top bán chạy
-    @Query("SELECT p FROM Product p WHERE p.status = 'PUBLISHED' ORDER BY p.soldCount DESC")
+    @Query("SELECT p FROM Product p ORDER BY p.soldCount DESC")
     List<Product> findTopBySoldCount(Pageable pageable);
 
     // Sản phẩm nổi bật (featured = true hoặc soldCount cao)
-    @Query("SELECT p FROM Product p WHERE p.status = 'PUBLISHED' ORDER BY p.soldCount DESC")
+    @Query("SELECT p FROM Product p ORDER BY p.soldCount DESC")
     List<Product> findFeatured(Pageable pageable);
 
     // Đếm sắp hết hàng
     @Query("SELECT COUNT(p) FROM Product p WHERE p.stockQuantity > 0 AND p.stockQuantity < :threshold")
     Long countLowStock(@Param("threshold") int threshold);
-
-    // Tổng sản phẩm đang bán
-    Long countByStatus(Product.ProductStatus status);
 
 
     @Query("""
@@ -160,7 +151,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
         FROM Product p
         WHERE p.brand.id = :brandId
           AND p.category IS NOT NULL
-          AND p.category.active = true
     """)
     List<Category> findCategoriesByBrandId(@Param("brandId") Long brandId);
 }

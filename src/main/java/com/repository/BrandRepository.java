@@ -11,7 +11,6 @@ import java.util.Optional;
 public interface BrandRepository extends JpaRepository<Brand, Long> {
     Optional<Brand> findByName(String name);
     Optional<Brand> findBySlug(String slug);
-    List<Brand> findByActiveTrue();
 
     @Query("""
         SELECT DISTINCT p.brand

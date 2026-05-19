@@ -49,7 +49,6 @@ public class CategoryService {
                 .slug(r.getSlug())
                 .image(r.getImage())
                 .icon(r.getIcon())
-                .active(true)
                 .build();
 
         if (r.getParentId() != null) {
@@ -68,7 +67,6 @@ public class CategoryService {
         category.setImage(request.getImage());
         category.setSlug(request.getSlug());
         category.setIcon(request.getIcon());
-        category.setActive(request.getActive());
 
         if (request.getParentId() != null) {
             if (request.getParentId().equals(id)) {

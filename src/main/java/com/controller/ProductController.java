@@ -112,10 +112,7 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/featured")
-    public ResponseEntity<List<ProductDTO>> getFeaturedProducts() {
-        return ResponseEntity.ok(productService.getFeaturedProducts());
-    }
+
 
     @GetMapping("/new")
     public ResponseEntity<List<ProductDTO>> getNewProducts(@RequestParam(required = false) Long categoryId) {

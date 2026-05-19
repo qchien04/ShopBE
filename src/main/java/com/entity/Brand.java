@@ -22,7 +22,7 @@ public class Brand {
     private String description;
     private String logo;
     private String website;
-    private Boolean active = true;
+
 
     @CreationTimestamp
     private LocalDateTime createdAt;

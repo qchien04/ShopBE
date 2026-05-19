@@ -12,7 +12,7 @@ public class CategoryDTO {
     private String description;
     private String slug;
     private String image;
-    private Boolean active;
+
     private Long parentId;
     private List<CategoryDTO> children;
 }

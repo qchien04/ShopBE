@@ -14,7 +14,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     Page<Post> findByStatus(Post.PostStatus status, Pageable pageable);
 
-    Page<Post> findAll( Pageable pageable);
+    Page<Post> findAll(Pageable pageable);
 
     Page<Post> findByCategory(String category, Pageable pageable);
 
@@ -24,18 +24,17 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     List<Post> findRandomPosts();
 
     @Query("""
-        SELECT p FROM Post p
-        WHERE (:status IS NULL OR p.status = :status)
-          AND (:category IS NULL OR p.category = :category)
-          AND (:keyword IS NULL OR
-               LOWER(p.title) LIKE :keyword
-               OR LOWER(p.description) LIKE :keyword)
-    """)
-    @EntityGraph(attributePaths = {"tags"})
+                SELECT p FROM Post p
+                WHERE (:status IS NULL OR p.status = :status)
+                  AND (:category IS NULL OR p.category = :category)
+                  AND (:keyword IS NULL OR
+                       LOWER(p.title) LIKE :keyword
+                       OR LOWER(p.description) LIKE :keyword)
+            """)
+    @EntityGraph(attributePaths = { "tags" })
     Page<Post> search(
             @Param("status") Post.PostStatus status,
             @Param("category") String category,
             @Param("keyword") String keyword,
-            Pageable pageable
-    );
+            Pageable pageable);
 }

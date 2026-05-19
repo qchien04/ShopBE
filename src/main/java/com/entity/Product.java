@@ -45,10 +45,6 @@ public class Product {
     @JoinColumn(name = "brand_id",nullable = true)
     private Brand brand;
 
-    @Enumerated(EnumType.STRING)
-    private ProductStatus status = ProductStatus.DRAFT;
-
-    private Boolean featured = false;
     private Integer viewCount = 0;
     private Integer soldCount = 0;
 
@@ -63,6 +59,4 @@ public class Product {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
-
-    public enum ProductStatus { DRAFT, PUBLISHED, OUT_OF_STOCK, DISCONTINUED }
 }

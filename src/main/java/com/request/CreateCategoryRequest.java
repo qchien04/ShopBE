@@ -8,6 +8,6 @@ public class CreateCategoryRequest {
     private String slug;
     private String icon;
     private String image;
-    private Boolean active = true;
+
     private Long parentId;
 }

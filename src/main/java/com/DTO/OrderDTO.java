@@ -35,5 +35,6 @@ public class OrderDTO {
     private Integer deliveryAttempts;
     private String cancelReason;
     private String internalNote;
+    private List<OrderStatusHistoryDTO> statusHistory;
 
 }

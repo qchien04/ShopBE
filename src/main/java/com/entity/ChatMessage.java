@@ -1,4 +1,5 @@
 package com.entity;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,12 +13,16 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChatMessage {
-    @Id @GeneratedValue
+    @Id
+    @GeneratedValue
     private Long id;
 
     private Long roomId;
-    private Long senderId;
-    private String senderRole;    // "CUSTOMER" | "STAFF"
+
+    @Column(nullable = true)
+    private Long senderId; // null nếu AI
+
+    private String senderRole; // "CUSTOMER" | "STAFF" | "AI"
     private String content;
     private boolean isRead;
     private LocalDateTime sentAt;

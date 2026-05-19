@@ -75,7 +75,7 @@ public class DashboardService {
                 long pendingOrders = orderRepository.countPendingOrders();
 
                 // Products
-                long totalProducts = productRepository.countByStatus(Product.ProductStatus.PUBLISHED);
+                long totalProducts = productRepository.count();
                 long lowStock = productRepository.countLowStock(10);
 
                 // New customers this week
@@ -200,7 +200,6 @@ public class DashboardService {
                                                 .salePrice(p.getSalePrice())
                                                 .stockQuantity(p.getStockQuantity())
                                                 .soldCount(p.getSoldCount())
-                                                .status(p.getStatus())
                                                 .build())
                                 .toList();
         }

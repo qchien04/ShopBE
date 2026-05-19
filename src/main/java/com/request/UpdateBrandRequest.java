@@ -19,7 +19,7 @@ public class UpdateBrandRequest {
     private String logo;
     private String slug;
     private String website;
-    private Boolean active;
+
     private LocalDateTime createdAt;
     private LocalDateTime updateAt;
 }

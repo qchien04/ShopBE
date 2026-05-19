@@ -5,7 +5,6 @@ import com.entity.Post;
 import com.request.PostRequest;
 import org.mapstruct.Mapper;
 
-
 @Mapper(componentModel = "spring")
 public class PostMapper {
 
@@ -37,12 +36,19 @@ public class PostMapper {
     }
 
     public void updateEntity(Post post, PostRequest req) {
-        if (req.getTitle() != null) post.setTitle(req.getTitle());
-        if (req.getCategory() != null) post.setCategory(req.getCategory());
-        if (req.getDescription() != null) post.setDescription(req.getDescription());
-        if (req.getThumbnail() != null) post.setThumbnail(req.getThumbnail());
-        if (req.getTags() != null) post.setTags(req.getTags());
-        if (req.getContent() != null) post.setContent(req.getContent());
-        if (req.getStatus() != null) post.setStatus(req.getStatus());
+        if (req.getTitle() != null)
+            post.setTitle(req.getTitle());
+        if (req.getCategory() != null)
+            post.setCategory(req.getCategory());
+        if (req.getDescription() != null)
+            post.setDescription(req.getDescription());
+        if (req.getThumbnail() != null)
+            post.setThumbnail(req.getThumbnail());
+        if (req.getTags() != null)
+            post.setTags(req.getTags());
+        if (req.getContent() != null)
+            post.setContent(req.getContent());
+        if (req.getStatus() != null)
+            post.setStatus(req.getStatus());
     }
 }

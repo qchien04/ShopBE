@@ -23,4 +23,16 @@ public interface ProductEmbeddingRepository
             @Param("queryEmbedding") String queryEmbedding,
             @Param("limit") int limit
     );
+
+    @Query(value = """
+        SELECT product_id as productId, content
+        FROM product_embeddings
+        WHERE product_id != :productId
+        ORDER BY embedding <=> (SELECT embedding FROM product_embeddings WHERE product_id = :productId)
+        LIMIT :limit
+        """, nativeQuery = true)
+    List<ProductEmbeddingProjection> findSimilarProducts(
+            @Param("productId") Long productId,
+            @Param("limit") int limit
+    );
 }

@@ -342,17 +342,30 @@ public class UserServiceImpl implements UserDetailsService, UserAccountService {
 
     public Authentication authenticate(String username, String password) {
         try {
+            Optional<User> userOpt = userAccountRepo.findByUsername(username);
+            if (userOpt.isEmpty()) {
+                userOpt = userAccountRepo.findByEmail(username);
+            }
+            if (userOpt.isEmpty()) {
+                throw new UserAccountException("Tài khoản hoặc mật khẩu không chính xác!");
+            }
+            
+            User user = userOpt.get();
+            if (!user.isActive()) {
+                throw new UserAccountException("Tài khoản chưa được kích hoạt qua Gmail. Vui lòng kiểm tra Gmail để xác thực!");
+            }
+
             CustomUserDetails userDetails = (CustomUserDetails) loadUserByUsername(username);
 
             if (userDetails == null) {
                 throw new UserAccountException("Invalid user");
             }
             if (!passwordEncoder.matches(password, userDetails.getPassword())) {
-                throw new UserAccountException("Invalid password or username");
+                throw new UserAccountException("Tài khoản hoặc mật khẩu không chính xác!");
             }
             return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
         } catch (UsernameNotFoundException e) {
-            throw new UserAccountException("Invalid user");
+            throw new UserAccountException("Tài khoản hoặc mật khẩu không chính xác!");
         }
 
     }
