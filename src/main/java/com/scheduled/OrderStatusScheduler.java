@@ -31,7 +31,7 @@ public class OrderStatusScheduler {
                         .get(Long.parseLong(order.getOrderNumber().substring(3)));
 
                 if ("PAID".equals(paymentLink.getStatus())) {
-                    orderService.updatePaymentStatus(order.getId(), PaymentTransaction.PaymentStatus.PAID);
+                    orderService.updatePaymentStatus(order.getId(), PaymentTransaction.PaymentStatus.PAID, true);
                 }
 
             } catch (Exception e) {

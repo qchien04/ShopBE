@@ -64,7 +64,7 @@ public class AdminController {
 
                 if ("PAID".equals(String.valueOf(paymentLink.getStatus()))) {
                     System.out.println("Update "+order.getOrderNumber());
-                    orderService.updatePaymentStatus(order.getId(), PaymentTransaction.PaymentStatus.PAID);
+                    orderService.updatePaymentStatus(order.getId(), PaymentTransaction.PaymentStatus.PAID,true);
                 }
 
             } catch (Exception e) {

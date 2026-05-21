@@ -1,21 +1,26 @@
 package com.service.implement;
 
+import com.DTO.DiscountCalculationResult;
 import com.DTO.OrderDTO;
 import com.DTO.OrderStatusHistoryDTO;
 import com.entity.*;
 import com.exception.InvalidRequestException;
+import com.exception.NoPermissionException;
 import com.exception.NotFoundObjectRequestException;
+import com.exception.UserAccountException;
 import com.mapper.OrderMapper;
 import com.repository.*;
 import com.request.OrderRequest;
 import com.request.UpdateOrderStatusRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +31,7 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final OrderMapper orderMapper;
     private final CouponService couponService;
+    private final PromotionEngineService promotionEngineService;
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
 
     public List<OrderDTO> getAllOrders() {
@@ -126,6 +132,7 @@ public class OrderService {
         productVariantRepository.saveAll(updatedProducts);
         updatedProducts.forEach(this::syncProductStock);
 
+        // ── 1. Coupon discount ─────────────────────────────────────────────
         double couponDiscount = 0.0;
         String couponDetails = null;
         if (request.getCouponCode() != null && !request.getCouponCode().isBlank()) {
@@ -145,10 +152,43 @@ public class OrderService {
                             : "");
         }
 
-        double totalDiscount = couponDiscount;
+        // ── 2. Promotion Engine discount ───────────────────────────────────
+        List<PromotionEngineService.PromotionContext.CartItemInfo> cartInfoList = newOrder.getItems().stream()
+                .map(item -> {
+                    ProductVariant variant = item.getProductVariant();
+                    Long categoryId = variant.getProduct().getCategory() != null
+                            ? variant.getProduct().getCategory().getId()
+                            : null;
+                    Long brandId = variant.getProduct().getBrand() != null
+                            ? variant.getProduct().getBrand().getId()
+                            : null;
+                    return new PromotionEngineService.PromotionContext.CartItemInfo(
+                            variant.getProduct().getId(),
+                            variant.getId(),
+                            categoryId,
+                            brandId,
+                            item.getPrice(),
+                            item.getQuantity());
+                })
+                .collect(Collectors.toList());
+
+        PromotionEngineService.PromotionContext promoCtx = new PromotionEngineService.PromotionContext(
+                subTotal, newOrder.getShippingFee(), cartInfoList, myId);
+        PromotionEngineService.PromotionResult promoResult = promotionEngineService.evaluate(promoCtx);
+
+        double promotionDiscount = promoResult.getTotalDiscount();
+        String promotionDetails = promoResult.getAppliedPromotions().isEmpty() ? null
+                : promoResult.getAppliedPromotions().stream()
+                        .map(PromotionEngineService.AppliedPromotion::description)
+                        .collect(Collectors.joining(" | "));
+
+        // ── 4. Merge all discounts ─────────────────────────────────────────
+        double totalDiscount = couponDiscount + promotionDiscount;
+        String mergedDetails = buildDiscountDetails(couponDetails, promotionDetails);
+
         newOrder.setDiscount(totalDiscount);
         newOrder.setCouponCode(request.getCouponCode());
-        newOrder.setCouponDetails(couponDetails);
+        newOrder.setCouponDetails(mergedDetails);
         newOrder.setSubtotal(subTotal);
         double finalTotal = subTotal + newOrder.getShippingFee() - totalDiscount;
         newOrder.setTotal(Math.max(0.0, finalTotal));
@@ -159,15 +199,137 @@ public class OrderService {
         return toDetailedDto(newOrder);
     }
 
+    public DiscountCalculationResult calculateDiscountPreview(OrderRequest request) {
+        Long myId = ((Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+
+        List<OrderRequest.Item> items = request.getItems();
+        List<Long> variantIds = items.stream().map(OrderRequest.Item::getProductVariantId).collect(Collectors.toList());
+        List<ProductVariant> products = productVariantRepository.findAllById(variantIds);
+
+        double subTotal = 0.0;
+        List<PromotionEngineService.PromotionContext.CartItemInfo> cartInfoList = new ArrayList<>();
+
+        for (OrderRequest.Item item : items) {
+            for (ProductVariant product : products) {
+                if (item.getProductVariantId().equals(product.getId())) {
+                    double price = product.getSalePrice();
+                    subTotal += price * item.getQuantity();
+
+                    Long categoryId = product.getProduct().getCategory() != null
+                            ? product.getProduct().getCategory().getId()
+                            : null;
+                    Long brandId = product.getProduct().getBrand() != null ? product.getProduct().getBrand().getId()
+                            : null;
+
+                    cartInfoList.add(new PromotionEngineService.PromotionContext.CartItemInfo(
+                            product.getProduct().getId(),
+                            product.getId(),
+                            categoryId,
+                            brandId,
+                            price,
+                            item.getQuantity()));
+                    break;
+                }
+            }
+        }
+
+        double couponDiscount = 0.0;
+        String couponDetails = null;
+        if (request.getCouponCode() != null && !request.getCouponCode().isBlank()) {
+            try {
+                Coupon coupon = couponService.validateCoupon(request.getCouponCode(), subTotal);
+                couponDiscount = couponService.calculateDiscount(coupon, subTotal);
+                couponDetails = String.format("Giảm %s%s%s%s",
+                        coupon.getDiscountType() == com.entity.Coupon.DiscountType.PERCENTAGE
+                                ? coupon.getDiscountValue()
+                                : String.format("%,.0f", coupon.getDiscountValue()),
+                        coupon.getDiscountType() == com.entity.Coupon.DiscountType.PERCENTAGE ? "%" : "₫",
+                        (coupon.getMaxDiscountAmount() != null && coupon.getMaxDiscountAmount() > 0)
+                                ? " (Tối đa " + String.format("%,.0f", coupon.getMaxDiscountAmount()) + "₫)"
+                                : "",
+                        (coupon.getMinOrderValue() != null && coupon.getMinOrderValue() > 0)
+                                ? " - Đơn từ " + String.format("%,.0f", coupon.getMinOrderValue()) + "₫"
+                                : "");
+            } catch (Exception ignored) {
+            } // Bỏ qua nếu mã sai/hết hạn
+        }
+
+        double originalShippingFee = 20000;
+
+        PromotionEngineService.PromotionContext promoCtx = new PromotionEngineService.PromotionContext(
+                subTotal, originalShippingFee, cartInfoList, myId);
+        PromotionEngineService.PromotionResult promoResult = promotionEngineService.evaluate(promoCtx);
+
+        double promotionDiscount = promoResult.getTotalDiscount();
+        String promotionDetails = promoResult.getAppliedPromotions().isEmpty() ? null
+                : promoResult.getAppliedPromotions().stream()
+                        .map(PromotionEngineService.AppliedPromotion::description)
+                        .collect(Collectors.joining(" | "));
+
+        double totalDiscount = couponDiscount + promotionDiscount;
+        String mergedDetails = buildDiscountDetails(couponDetails, promotionDetails);
+
+        double finalTotal = subTotal + originalShippingFee - totalDiscount;
+
+        return DiscountCalculationResult.builder()
+                .subtotal(subTotal)
+                .shippingFee(originalShippingFee)
+                .couponDiscount(couponDiscount)
+                .promotionDiscount(promotionDiscount)
+                .totalDiscount(totalDiscount)
+                .total(Math.max(0.0, finalTotal))
+                .couponDetails(couponDetails)
+                .promotionDetails(promotionDetails)
+                .mergedDetails(mergedDetails)
+                .build();
+    }
+
+    private String buildDiscountDetails(String couponDetails, String promotionDetails) {
+        if (couponDetails == null && promotionDetails == null)
+            return null;
+        if (couponDetails == null)
+            return promotionDetails;
+        if (promotionDetails == null)
+            return couponDetails;
+        return couponDetails + " | " + promotionDetails;
+    }
+
     public List<Order> findByPaymentStatus(PaymentTransaction.PaymentStatus status) {
         return orderRepository.findByPaymentStatus(status);
     }
 
     @Transactional
-    public Order updatePaymentStatus(Long id, PaymentTransaction.PaymentStatus status) {
+    public Order updatePaymentStatus(Long id, PaymentTransaction.PaymentStatus status, boolean isSystem) {
+        if(isSystem){
+            Order order = findEntityById(id);
+            order.setPaymentStatus(status);
+            return orderRepository.save(order);
+        }
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        System.out.println(auth);
+        System.out.println(auth.getAuthorities());
+        System.out.println(auth.isAuthenticated());
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new UserAccountException("Bạn chưa đăng nhập!");
+        }
+
+        boolean isAdmin = auth.getAuthorities()
+                .stream()
+                .anyMatch(a -> a.getAuthority().contains("ADMIN"));
+
+        if (!isAdmin) {
+            throw new NoPermissionException("Bạn không có quyền thực hiện chức năng này!");
+        }
         Order order = findEntityById(id);
         order.setPaymentStatus(status);
         return orderRepository.save(order);
+    }
+
+    @Transactional
+    public OrderDTO updateOrderPaymentStatusAdmin(Long id, PaymentTransaction.PaymentStatus status) {
+        Order order = updatePaymentStatus(id, status, false);
+        return toDetailedDto(order);
     }
 
     @Transactional
@@ -305,9 +467,9 @@ public class OrderService {
                 Order.OrderStatus.PROCESSING,
                 Order.OrderStatus.SHIPPING,
                 Order.OrderStatus.DELIVERY_FAILED,
-                Order.OrderStatus.DELIVERED
-        ).contains(status);
+                Order.OrderStatus.DELIVERED).contains(status);
     }
+
     private void restoreStock(Order order) {
         order.getItems().forEach(item -> {
             ProductVariant v = item.getProductVariant();
@@ -336,10 +498,11 @@ public class OrderService {
             productVariantRepository.save(v);
 
             var product = v.getProduct();
-            product.setSoldCount(Math.max(0, (product.getSoldCount() == null ? 0 : product.getSoldCount()) - item.getQuantity()));
+            product.setSoldCount(
+                    Math.max(0, (product.getSoldCount() == null ? 0 : product.getSoldCount()) - item.getQuantity()));
             productRepository.save(product);
         });
-                    
+
     }
 
     /** Đồng bộ stockQuantity tổng lên Product từ tất cả variant */
@@ -352,10 +515,11 @@ public class OrderService {
         productRepository.save(product);
     }
 
-    private void logStatusChange(Order order, Order.OrderStatus fromStatus, Order.OrderStatus toStatus, String note, String actionBy) {
+    private void logStatusChange(Order order, Order.OrderStatus fromStatus, Order.OrderStatus toStatus, String note,
+            String actionBy) {
         OrderStatusHistory history = OrderStatusHistory.builder()
                 .order(order)
-            
+
                 .fromStatus(fromStatus)
                 .toStatus(toStatus)
                 .note(note)
@@ -373,10 +537,10 @@ public class OrderService {
     }
 
     private List<OrderDTO> toDetailedDtos(List<Order> orders) {
-        if (orders == null) return new ArrayList<>();
+        if (orders == null)
+            return new ArrayList<>();
         return orders.stream().map(this::toDetailedDto).toList();
     }
-            
 
     private List<OrderStatusHistoryDTO> getHistoryDtos(Long orderId) {
         return orderStatusHistoryRepository.findByOrderIdOrderByCreatedAtDesc(orderId)

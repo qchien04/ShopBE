@@ -5,6 +5,7 @@ import com.DTO.ReviewSummary;
 import com.entity.Product;
 import com.entity.Review;
 import com.entity.User;
+import com.exception.InvalidRequestException;
 import com.exception.NotFoundObjectRequestException;
 import com.repository.ProductRepository;
 import com.repository.ReviewRepository;
@@ -31,14 +32,14 @@ public class ReviewService {
     public ReviewDTO addReview(Long productId, ReviewRequest request) {
         Long userId = ((Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
         if (request.rating() < 1 || request.rating() > 5) {
-            throw new IllegalArgumentException("Rating phải từ 1 đến 5");
+            throw new InvalidRequestException("Rating phải từ 1 đến 5");
         }
         if (reviewRepository.existsByProductIdAndUserId(productId, userId)) {
-            throw new IllegalStateException("Bạn đã đánh giá sản phẩm này rồi");
+            throw new InvalidRequestException("Bạn đã đánh giá sản phẩm này rồi");
         }
 
         if (!orderItemRepository.hasUserPurchasedProduct(userId, productId)) {
-            throw new IllegalStateException("Bạn phải mua sản phẩm này và nhận hàng thành công mới có thể đánh giá");
+            throw new InvalidRequestException("Bạn phải mua sản phẩm này và nhận hàng thành công mới có thể đánh giá");
         }
 
         Product product = productRepository.findById(productId)

@@ -22,4 +22,3 @@ public class UpdateProductRequest {
     private List<Long> imageIds;
     private List<ProductVariantDTO> productVariants;
 }
-

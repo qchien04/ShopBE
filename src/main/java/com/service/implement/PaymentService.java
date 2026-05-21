@@ -20,6 +20,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +30,7 @@ public class PaymentService {
     private final PaymentRefundRepository refundRepository;
     private final OrderRepository orderRepository;
     private final PayOS payOS;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public PaymentTransaction createTransaction(Long orderId, PaymentTransaction.PaymentMethod method, Double amount) {
@@ -52,7 +55,7 @@ public class PaymentService {
 
 
     @Transactional
-    public CreatePaymentLinkResponse createPaymentLink(HttpServletRequest request,@RequestBody CreatePaymentRequest createPaymentRequest) {
+    public Object createPaymentLink(HttpServletRequest request,@RequestBody CreatePaymentRequest createPaymentRequest) {
         Long myId = ((Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
         PaymentTransaction.PaymentMethod paymentMethod= createPaymentRequest.getPaymentMethod();
 
@@ -63,6 +66,14 @@ public class PaymentService {
                 ()->new NotFoundObjectRequestException("Đơn hàng không tồn tại!")
         );
 
+        // Nếu đã có dữ liệu link thanh toán, parse JSON và trả về ngay
+        if (order.getCheckoutResponseData() != null && !order.getCheckoutResponseData().trim().isEmpty()) {
+            try {
+                return objectMapper.readValue(order.getCheckoutResponseData(), JsonNode.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
         List<PaymentLinkItem> items=new ArrayList<>();
         for(OrderItem orderItem:order.getItems()){
@@ -97,6 +108,14 @@ public class PaymentService {
 
             CreatePaymentLinkResponse data =
                     payOS.paymentRequests().create(paymentData);
+
+            // Lưu toàn bộ dữ liệu phản hồi vào đơn hàng để tái sử dụng
+            try {
+                order.setCheckoutResponseData(objectMapper.writeValueAsString(data));
+                orderRepository.save(order);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
             return data;
 

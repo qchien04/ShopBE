@@ -21,4 +21,3 @@ public class CreateProductRequest {
     private List<Long> imageIds;
     private List<ProductVariantDTO> productVariants;
 }
-

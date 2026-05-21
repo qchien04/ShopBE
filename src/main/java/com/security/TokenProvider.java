@@ -72,9 +72,7 @@ public class TokenProvider {
             List<?> authorities = claims.get("authorities", List.class);
             if (authorities.isEmpty()) {
                 return "CLIENT";
-                //                throw new IllegalStateException("Token không có role");
             }
-            // Mỗi phần tử là {"authority": "ROLE_STAFF"}
             Object first = authorities.getFirst();
             if (first instanceof Map<?,?>) {
                 System.out.println("Tao la: "+((Map<?, ?>) first).get("authority").toString());

@@ -1,6 +1,5 @@
 package com.exception;
 
-
 import com.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,41 +37,46 @@ public class GlobalException {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorDetail> MethodArgumentNotValidExceptionHandler(MethodArgumentNotValidException e, WebRequest req){
+    public ResponseEntity<ErrorDetail> MethodArgumentNotValidExceptionHandler(MethodArgumentNotValidException e,
+            WebRequest req) {
 
-        String error=e.getBindingResult().getFieldError().getDefaultMessage();
-        ErrorDetail errorDetail=new ErrorDetail("Validation error",error, LocalDateTime.now());
+        String error = e.getBindingResult().getFieldError().getDefaultMessage();
+        ErrorDetail errorDetail = new ErrorDetail("Validation error", error, LocalDateTime.now());
         return new ResponseEntity<ErrorDetail>(errorDetail, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(NoHandlerFoundException.class)
-    public ResponseEntity<ErrorDetail> NoHandlerFoundExceptionHandler(MethodArgumentNotValidException e, WebRequest req){
-        ErrorDetail errorDetail=new ErrorDetail("Enpoint not found",req.getDescription(false), LocalDateTime.now());
+    public ResponseEntity<ErrorDetail> NoHandlerFoundExceptionHandler(MethodArgumentNotValidException e,
+            WebRequest req) {
+        ErrorDetail errorDetail = new ErrorDetail("Enpoint not found", req.getDescription(false), LocalDateTime.now());
         return new ResponseEntity<ErrorDetail>(errorDetail, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<ErrorDetail> UnauthorizedExceptionHandler(UnauthorizedException e, WebRequest req){
-        ErrorDetail errorDetail=new ErrorDetail("Unauthorized!",req.getDescription(false), LocalDateTime.now());
+    public ResponseEntity<ErrorDetail> UnauthorizedExceptionHandler(UnauthorizedException e, WebRequest req) {
+        ErrorDetail errorDetail = new ErrorDetail("Unauthorized!", req.getDescription(false), LocalDateTime.now());
         return new ResponseEntity<ErrorDetail>(errorDetail, HttpStatus.UNAUTHORIZED);
     }
 
-
     @ExceptionHandler(NoPermissionException.class)
-    public ResponseEntity<ErrorDetail> NoPermissionExceptionHandler(NoPermissionException e, WebRequest req){
-        ErrorDetail errorDetail=new ErrorDetail("No permission",req.getDescription(false), LocalDateTime.now());
+    public ResponseEntity<ErrorDetail> NoPermissionExceptionHandler(NoPermissionException e, WebRequest req) {
+        ErrorDetail errorDetail = new ErrorDetail("No permission", req.getDescription(false), LocalDateTime.now());
         return new ResponseEntity<ErrorDetail>(errorDetail, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(NotFoundObjectRequestException.class)
-    public ResponseEntity<ErrorDetail> NotFoundObjectRequestExceptionHandler(NotFoundObjectRequestException e, WebRequest req){
-        ErrorDetail errorDetail=new ErrorDetail("Not found O request",req.getDescription(false), LocalDateTime.now());
+    public ResponseEntity<ErrorDetail> NotFoundObjectRequestExceptionHandler(NotFoundObjectRequestException e,
+            WebRequest req) {
+        ErrorDetail errorDetail = new ErrorDetail("Not found O request", req.getDescription(false),
+                LocalDateTime.now());
         return new ResponseEntity<ErrorDetail>(errorDetail, HttpStatus.BAD_REQUEST);
     }
-//    @ExceptionHandler(Exception.class)
-//    public ResponseEntity<ErrorDetail> otherExceptionHandler(Exception e, WebRequest req){
-//        ErrorDetail errorDetail=new ErrorDetail(e.getMessage(),req.getDescription(false), LocalDateTime.now());
-//        return new ResponseEntity<ErrorDetail>(errorDetail, HttpStatus.BAD_REQUEST);
-//    }
+    // @ExceptionHandler(Exception.class)
+    // public ResponseEntity<ErrorDetail> otherExceptionHandler(Exception e,
+    // WebRequest req){
+    // ErrorDetail errorDetail=new
+    // ErrorDetail(e.getMessage(),req.getDescription(false), LocalDateTime.now());
+    // return new ResponseEntity<ErrorDetail>(errorDetail, HttpStatus.BAD_REQUEST);
+    // }
 
 }

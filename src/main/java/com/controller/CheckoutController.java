@@ -40,7 +40,7 @@ public class CheckoutController {
     @PostMapping(
             value = "/create-payment-link")
     public ResponseEntity<?> checkout(HttpServletRequest request,@RequestBody CreatePaymentRequest createPaymentRequest) {
-        CreatePaymentLinkResponse paymentData=paymentService.createPaymentLink(request,createPaymentRequest);
+        Object paymentData = paymentService.createPaymentLink(request,createPaymentRequest);
 
         return ResponseEntity.ok(paymentData);
     }

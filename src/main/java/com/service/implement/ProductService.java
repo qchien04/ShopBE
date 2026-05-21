@@ -40,6 +40,10 @@ public class ProductService {
     private final ProductEmbeddingService productEmbeddingService;
 
     public Page<ProductDTO> getAllProducts(int page, int size, String keyword) {
+        if(keyword == null || keyword.isBlank()) {
+            keyword = "";
+        }
+
         PageRequest pageRequest = PageRequest.of(page, size);
 
         Page<Product> products = productRepository.searchAllWithKeyWord(keyword, pageRequest);
@@ -193,6 +197,9 @@ public class ProductService {
     public Page<ProductDTO> searchProducts(String keyword, int page, int size, long minPrice,
             long maxPrice, List<Long> brandIds,
             List<Long> subCategoryIds, String sort, boolean inStock) {
+        if(keyword == null || keyword.isBlank()) {
+            keyword = "";
+        }
         PageRequest pageRequest = PageRequest.of(page, size);
         Page<Product> products = productRepository.search(keyword, minPrice, maxPrice, brandIds,
                 subCategoryIds, sort, inStock,
@@ -222,9 +229,9 @@ public class ProductService {
                 .brand(brand)
                 .build();
 
+        List<ProductVariant> productVariants = new ArrayList<>();
         if (request.getProductVariants() != null && !request.getProductVariants().isEmpty()) {
             List<ProductVariantDTO> va = request.getProductVariants();
-            List<ProductVariant> productVariants = new ArrayList<>();
             for (ProductVariantDTO i : va) {
                 ProductVariant productVariant = ProductVariant.builder()
                         .product(newProduct)
@@ -238,9 +245,20 @@ public class ProductService {
                         .build();
                 productVariants.add(productVariant);
             }
-
-            newProduct.setProductVariants(productVariants);
+        } else {
+            ProductVariant defaultVariant = ProductVariant.builder()
+                    .product(newProduct)
+                    .name(newProduct.getName())
+                    .sku(newProduct.getSku() != null ? newProduct.getSku() : "SKU-" + System.currentTimeMillis())
+                    .price(newProduct.getPrice())
+                    .salePrice(newProduct.getSalePrice())
+                    .stockQuantity(newProduct.getStockQuantity())
+                    .mainImage(newProduct.getMainImage())
+                    .attributes(new HashMap<>())
+                    .build();
+            productVariants.add(defaultVariant);
         }
+        newProduct.setProductVariants(productVariants);
         newProduct = productRepository.save(newProduct);
 
         if (request.getImageIds() != null && !request.getImageIds().isEmpty()) {
@@ -284,7 +302,7 @@ public class ProductService {
         product.setBrand(brand);
 
         product.getProductVariants().clear();
-        if (request.getProductVariants() != null) {
+        if (request.getProductVariants() != null && !request.getProductVariants().isEmpty()) {
             List<ProductVariantDTO> va = request.getProductVariants();
             for (ProductVariantDTO i : va) {
                 ProductVariant productVariant = ProductVariant.builder()
@@ -299,6 +317,18 @@ public class ProductService {
                         .build();
                 product.getProductVariants().add(productVariant);
             }
+        } else {
+            ProductVariant defaultVariant = ProductVariant.builder()
+                    .product(product)
+                    .name(product.getName())
+                    .sku(product.getSku() != null ? product.getSku() : "SKU-" + System.currentTimeMillis())
+                    .price(product.getPrice())
+                    .salePrice(product.getSalePrice())
+                    .stockQuantity(product.getStockQuantity())
+                    .mainImage(product.getMainImage())
+                    .attributes(new HashMap<>())
+                    .build();
+            product.getProductVariants().add(defaultVariant);
         }
         // ===== update images =====
         product.getImages().forEach(img -> img.setProduct(null));

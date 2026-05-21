@@ -94,9 +94,9 @@ public class ProductRagService {
         return orderService.getOrdersByUserId(myId);
     }
 
-    public CreatePaymentLinkResponse getPaymentLinkForOrder(Long orderId) {
+    public Object getPaymentLinkForOrder(Long orderId) {
         CreatePaymentRequest request = new CreatePaymentRequest();
-        request.setOrderId(orderId);
+//        request.setOrderId(orderId);
         request.setPaymentMethod(PaymentTransaction.PaymentMethod.BANK_TRANSFER);
         return paymentService.createPaymentLink(getCurrentRequest(), request);
     }

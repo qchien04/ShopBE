@@ -42,6 +42,9 @@ public class Order {
     @Column(columnDefinition = "TEXT")
     private String internalNote;
 
+    @Column(columnDefinition = "TEXT")
+    private String checkoutResponseData;
+
     @Builder.Default
     private Integer deliveryAttempts = 0;
 

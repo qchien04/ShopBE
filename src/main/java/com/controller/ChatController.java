@@ -87,7 +87,8 @@ public class ChatController {
             throw new AccessDeniedException("Bạn không ở trong room này");
         }
 
-        String senderRole = hasRole(principal, "ROLE_ADMIN") ? "ADMIN" : "CLIENT";
+        String senderRole = hasRole(principal, "ADMIN") ? "ADMIN" : "CLIENT";
+        System.out.println("Send role nay: "+senderRole);
         ChatMessage saved = chatService.saveMessage(new MessagePayload(roomId, userId, senderRole, content));
 
         // Gửi tin nhắn đến room
@@ -124,7 +125,7 @@ public class ChatController {
     public void acceptRoom(@Payload Long roomId,
             Principal principal,
             SimpMessageHeaderAccessor headerAccessor) {
-        if (!hasRole(principal, "ROLE_ADMIN")) {
+        if (!hasRole(principal, "ADMIN")) {
             throw new AccessDeniedException("Không có quyền");
         }
 
