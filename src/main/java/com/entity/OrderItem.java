@@ -23,9 +23,14 @@ public class OrderItem {
     @JoinColumn(name = "product_variant_id")
     private ProductVariant productVariant;
 
+    @ManyToOne
+    @JoinColumn(name = "product_id")
+    private Product product;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "json")
     private Map<String, String> attributes;
+
     private String productName;
     private String productSku;
     private String productImage;

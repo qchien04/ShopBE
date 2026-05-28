@@ -6,6 +6,7 @@ import com.entity.Review;
 import java.time.LocalDateTime;
 public record ReviewDTO(
         Long id,
+        Long productId,
         String productName,
         String userName,
         String userAvatar,

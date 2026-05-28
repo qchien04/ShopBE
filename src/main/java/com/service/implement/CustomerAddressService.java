@@ -34,13 +34,13 @@ public class CustomerAddressService {
                 .user(User.builder().id(myId).build())
                 .fullName(r.getFullName())
                 .phone(r.getPhone())
-                .province(r.getProvince())
-                .district(r.getDistrict())
-                .ward(r.getWard())
                 .detailAddress(r.getDetailAddress())
                 .lat(r.getLat())
                 .lng(r.getLng())
                 .isDefault(r.getIsDefault())
+                .ghnProvinceId(r.getGhnProvinceId())
+                .ghnDistrictId(r.getGhnDistrictId())
+                .ghnWardCode(r.getGhnWardCode())
                 .build();
         customerAddress=customerAddressRepository.save(customerAddress);
         return customerAddressMapper.toDto(customerAddress);
@@ -55,13 +55,14 @@ public class CustomerAddressService {
 
         customerAddress.setFullName(r.getFullName());
         customerAddress.setPhone(r.getPhone());
-        customerAddress.setProvince(r.getProvince());
-        customerAddress.setDistrict(r.getDistrict());
-        customerAddress.setWard(r.getWard());
         customerAddress.setDetailAddress(r.getDetailAddress());
         customerAddress.setIsDefault(r.getIsDefault());
         customerAddress.setLat(r.getLat());
         customerAddress.setLng(r.getLng());
+        // GHN fields
+        if (r.getGhnProvinceId() != null) customerAddress.setGhnProvinceId(r.getGhnProvinceId());
+        if (r.getGhnDistrictId() != null) customerAddress.setGhnDistrictId(r.getGhnDistrictId());
+        if (r.getGhnWardCode() != null)   customerAddress.setGhnWardCode(r.getGhnWardCode());
 
         customerAddress=customerAddressRepository.save(customerAddress);
         return customerAddressMapper.toDto(customerAddress);

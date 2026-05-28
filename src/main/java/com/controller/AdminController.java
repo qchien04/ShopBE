@@ -2,6 +2,7 @@ package com.controller;
 
 import com.DTO.HomePageConfigDTO;
 import com.DTO.ReviewDTO;
+import com.DTO.ShippingConfigDTO;
 import com.DTO.dashboard.DashboardDTO;
 import com.entity.Order;
 import com.entity.PaymentTransaction;
@@ -46,6 +47,16 @@ public class AdminController {
     @PostMapping("/configs/banner")
     public ResponseEntity<HomePageConfigDTO> saveBanner(@RequestBody HomePageConfigDTO dto) {
         return ResponseEntity.ok(configService.saveBannerConfig(dto));
+    }
+
+    @GetMapping("/configs/shipping")
+    public ResponseEntity<ShippingConfigDTO> getShippingConfig() {
+        return ResponseEntity.ok(configService.getShippingConfig());
+    }
+
+    @PostMapping("/configs/shipping")
+    public ResponseEntity<ShippingConfigDTO> saveShippingConfig(@RequestBody ShippingConfigDTO dto) {
+        return ResponseEntity.ok(configService.saveShippingConfig(dto));
     }
 
     @GetMapping("/dashboard")

@@ -10,5 +10,7 @@ import java.util.List;
 public interface CustomerAddressMapper {
 
     CustomerAddressDTO toDto(CustomerAddress r);
+    
+    // Force recompile to generate mappings for new GHN fields
     List<CustomerAddressDTO> toDtos(List<CustomerAddress> rs);
 }

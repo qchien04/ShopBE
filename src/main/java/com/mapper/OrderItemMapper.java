@@ -17,7 +17,18 @@ public interface OrderItemMapper {
     @Named("toDto")
     @Mapping(target = "orderId", source = "order.id")
     @Mapping(target = "productVariantId", source = "productVariant.id")
+    @Mapping(target = "productId", expression = "java(mapProductId(orderItem))")
     OrderItemDTO toDto(OrderItem orderItem);
+
+    default Long mapProductId(OrderItem orderItem) {
+        if (orderItem.getProduct() != null) {
+            return orderItem.getProduct().getId();
+        }
+        if (orderItem.getProductVariant() != null && orderItem.getProductVariant().getProduct() != null) {
+            return orderItem.getProductVariant().getProduct().getId();
+        }
+        return null;
+    }
 
     @IterableMapping(qualifiedByName = "toDto")
     List<OrderItemDTO> toDtos(List<OrderItem> items);

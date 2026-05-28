@@ -2,8 +2,10 @@ package com.controller;
 
 import com.DTO.OrderDTO;
 import com.entity.PaymentTransaction;
+import com.request.AdminOrderFilterRequest;
 import com.request.OrderRequest;
 import com.request.UpdateOrderStatusRequest;
+import com.response.UserOrderResponse;
 import com.service.implement.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,8 +19,9 @@ public class OrderController {
     private final OrderService orderService;
 
     @GetMapping
-    public ResponseEntity<List<OrderDTO>> getAllOrders() {
-        return ResponseEntity.ok(orderService.getAllOrders());
+    public ResponseEntity<UserOrderResponse<OrderDTO>> getAllOrdersPaginated(
+            @ModelAttribute AdminOrderFilterRequest rq) {
+        return ResponseEntity.ok(orderService.getAllOrdersPaginated(rq));
     }
 
     @GetMapping("/{id}")
@@ -32,8 +35,11 @@ public class OrderController {
     }
 
     @GetMapping("/user")
-    public ResponseEntity<List<OrderDTO>> getOrdersByUserId() {
-        return ResponseEntity.ok(orderService.getOrdersByUserId());
+    public ResponseEntity<com.response.UserOrderResponse<OrderDTO>> getOrdersByUserId(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "ALL") String status) {
+        return ResponseEntity.ok(orderService.getOrdersByUserIdPaginated(page, size, status));
     }
 
     @PostMapping

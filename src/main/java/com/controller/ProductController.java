@@ -121,7 +121,7 @@ public class ProductController {
 
     @GetMapping("/search")
     public ResponseEntity<PageResponse<ProductDTO>> searchProducts(
-            @RequestParam String keyword,
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) List<Long> subCategoryIds,
             @RequestParam(required = false) List<Long> brandIds,
             @RequestParam(defaultValue = "default") String sort,
@@ -129,7 +129,7 @@ public class ProductController {
             @RequestParam(defaultValue = "9999999999") Long maxPrice,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "8") int size,
-            @RequestParam(defaultValue = "true") boolean inStock) {
+            @RequestParam(required = false) Boolean inStock) {
         Page<ProductDTO> dtoPage = productService.searchProducts(keyword, page, size, minPrice, maxPrice, brandIds,
                 subCategoryIds, sort, inStock);
         PageResponse<ProductDTO> response = new PageResponse<>(

@@ -21,7 +21,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Query("SELECT AVG(r.rating) FROM Review r WHERE r.product.id = :productId AND r.status = 'APPROVED'")
     Double getAverageRatingByProductId(@Param("productId") Long productId);
 
-    List<Review> findByProductIdAndStatusOrderByCreatedAtDesc(Long productId, Review.ReviewStatus status);
+    Page<Review> findByProductIdAndStatusOrderByCreatedAtDesc(Long productId,
+                                                              Review.ReviewStatus status,
+                                                              Pageable pageable);
     boolean existsByProductIdAndUserId(Long productId, Long userId);
 
     @Query("SELECT AVG(r.rating) FROM Review r WHERE r.product.id = :productId AND r.status = 'APPROVED'")
@@ -29,4 +31,14 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Query("SELECT COUNT(r) FROM Review r WHERE r.product.id = :productId AND r.status = 'APPROVED'")
     Long countApprovedByProductId(@Param("productId") Long productId);
+
+    @Query("""
+        SELECT r.rating, COUNT(r)
+        FROM Review r
+        WHERE r.product.id = :productId
+          AND r.status = 'APPROVED'
+        GROUP BY r.rating
+        ORDER BY r.rating DESC
+    """)
+    List<Object[]> countRatingByStar(@Param("productId") Long productId);
 }

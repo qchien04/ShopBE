@@ -9,6 +9,7 @@ public class OrderItemDTO {
     private Long id;
     private Long orderId;
     private Long productVariantId;
+    private Long productId;
     private String productName;
     private String productSku;
     private Map<String, String> attributes;

@@ -10,6 +10,9 @@ import java.util.Optional;
 public interface CustomerAddressRepository extends JpaRepository<CustomerAddress, Long> {
     List<CustomerAddress> findByUserId(Long userId);
     Optional<CustomerAddress> findByUserIdAndIsDefaultTrue(Long userId);
+    Optional<CustomerAddress> findByIdAndUserId(Long id, Long userId);
 
-    Optional<CustomerAddress> findByIdAndUserId(Long id,Long userId);
+    /** Dùng để tra cứu địa chỉ (có GHN codes) khi tạo vận đơn */
+    Optional<CustomerAddress> findFirstByUserIdAndFullNameAndPhone(Long userId, String fullName, String phone);
 }
+

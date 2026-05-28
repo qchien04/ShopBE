@@ -1,6 +1,7 @@
 package com.service.implement;
 import com.DTO.CategoryDTO;
 import com.entity.*;
+import com.exception.InvalidRequestException;
 import com.exception.NotFoundObjectRequestException;
 import com.mapper.CategoryMapper;
 import com.repository.*;
@@ -43,12 +44,14 @@ public class CategoryService {
 
     @Transactional
     public Category createCategory(CreateCategoryRequest r) {
+        if (categoryRepository.findBySlug(r.getSlug()).isPresent()) {
+            throw new InvalidRequestException("Slug danh mục đã tồn tại!");
+        }
         Category category= Category.builder()
                 .name(r.getName())
                 .description(r.getDescription())
                 .slug(r.getSlug())
                 .image(r.getImage())
-                .icon(r.getIcon())
                 .build();
 
         if (r.getParentId() != null) {
@@ -62,11 +65,15 @@ public class CategoryService {
     @Transactional
     public Category updateCategory(Long id, UpdateCategoryRequest request) {
         Category category = getCategoryById(id);
+        categoryRepository.findBySlug(request.getSlug()).ifPresent(existingCategory -> {
+            if (!existingCategory.getId().equals(id)) {
+                throw new InvalidRequestException("Slug danh mục đã tồn tại!");
+            }
+        });
         category.setName(request.getName());
         category.setDescription(request.getDescription());
         category.setImage(request.getImage());
         category.setSlug(request.getSlug());
-        category.setIcon(request.getIcon());
 
         if (request.getParentId() != null) {
             if (request.getParentId().equals(id)) {

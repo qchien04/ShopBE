@@ -23,6 +23,7 @@ public class ChatMessage {
     private Long senderId; // null nếu AI
 
     private String senderRole; // "CUSTOMER" | "STAFF" | "AI"
+    @Column(columnDefinition = "TEXT")
     private String content;
     private boolean isRead;
     private LocalDateTime sentAt;

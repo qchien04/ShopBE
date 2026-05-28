@@ -2,6 +2,7 @@ package com.controller;
 
 
 import com.DTO.UserAccountDTO;
+import com.request.ImageUrlUpdateRequest;
 import com.request.UpdateUserInfoRequest;
 import com.service.UserAccountService;
 import lombok.AllArgsConstructor;
@@ -45,8 +46,8 @@ public class UserController {
     }
 
     @PostMapping("/update-avt")
-    public ResponseEntity<UserAccountDTO> changeAvtHandle(@RequestBody String imgUrl) {
-        UserAccountDTO userProfile=userService.updateAvt(imgUrl);
+    public ResponseEntity<UserAccountDTO> changeAvtHandle(@RequestBody ImageUrlUpdateRequest request) {
+        UserAccountDTO userProfile=userService.updateAvt(request.getImageUrl());
         return new ResponseEntity<>(userProfile, HttpStatus.OK);
     }
 }

@@ -8,7 +8,6 @@ import java.util.List;
 public class CategoryDTO {
     private Long id;
     private String name;
-    private String icon;
     private String description;
     private String slug;
     private String image;

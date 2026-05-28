@@ -30,6 +30,7 @@ public class Order {
 
     private Double subtotal;
     private Double shippingFee;
+    private Double actualShippingFee; // Phí thực tế khi tạo đơn giao hàng (GHN)
     @Builder.Default
     private Double discount = 0.0;
     private String couponCode;
@@ -74,6 +75,10 @@ public class Order {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    // GHN shipping integration
+    private String ghnOrderCode;
+    private LocalDateTime ghnExpectedDeliveryTime;
 
     public enum OrderStatus {
         PENDING, CONFIRMED, PROCESSING,

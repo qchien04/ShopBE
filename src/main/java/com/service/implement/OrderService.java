@@ -10,9 +10,17 @@ import com.exception.NotFoundObjectRequestException;
 import com.exception.UserAccountException;
 import com.mapper.OrderMapper;
 import com.repository.*;
+import com.request.AdminOrderFilterRequest;
+import com.request.GHNCreateShippingRequest;
 import com.request.OrderRequest;
 import com.request.UpdateOrderStatusRequest;
+import com.response.UserOrderResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -22,6 +30,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -33,10 +42,74 @@ public class OrderService {
     private final CouponService couponService;
     private final PromotionEngineService promotionEngineService;
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
+    private final GHNService ghnService;
 
     public List<OrderDTO> getAllOrders() {
         List<Order> list = orderRepository.findAllWithFullInfo();
         return toDetailedDtos(list);
+    }
+
+    @Transactional(readOnly = true)
+    public UserOrderResponse<OrderDTO> getAllOrdersPaginated(AdminOrderFilterRequest req) {
+        Pageable pageable = PageRequest.of(
+                req.getPage(), req.getSize(),
+                Sort.by(Sort.Direction.DESC, "created_at")
+        );
+
+        // Normalize keyword
+        String keyword = (req.getKeyword() == null || req.getKeyword().isBlank())
+                ? null : req.getKeyword().trim();
+
+        LocalDateTime fromDate = req.getFromDate() != null
+                ? req.getFromDate().atStartOfDay() : null;
+        LocalDateTime toDate = req.getToDate() != null
+                ? req.getToDate().atTime(23, 59, 59) : null;
+
+
+        String status = req.getStatus();
+        String paymentStatus = req.getPaymentStatus();
+
+        if(status.equals("ALL")) status=null;
+        if(paymentStatus.equals("ALL")) paymentStatus=null;
+
+        Page<Long> idPage;
+        idPage = orderRepository.findIdsByFilters(
+                status, keyword, paymentStatus, fromDate, toDate, pageable);
+
+        List<Order> orders = idPage.isEmpty()
+                ? List.of()
+                : orderRepository.findByIdsWithFullInfo(idPage.getContent());
+
+        List<OrderDTO> dtos = orders.stream().map(this::toDetailedDto).toList();
+
+        List<Object[]> rawCounts = orderRepository.countByStatus();
+        Map<String, Long> counts = new HashMap<>();
+        long total = 0;
+
+        for (Object[] row : rawCounts) {
+            Order.OrderStatus st = (Order.OrderStatus) row[0];
+            Long count = (Long) row[1];
+            total += count;
+            counts.put(st.name(), count);
+        }
+        counts.put("ALL", total);
+        counts.put("PROCESSING", 0L);
+        counts.putIfAbsent("PENDING", 0L);
+        counts.putIfAbsent("CONFIRMED", 0L);
+        counts.putIfAbsent("SHIPPING", 0L);
+        counts.putIfAbsent("DELIVERED", 0L);
+        counts.putIfAbsent("CANCELLED", 0L);
+        counts.putIfAbsent("DELIVERY_FAILED", 0L);
+        counts.putIfAbsent("RETURNED", 0L);
+
+        return new UserOrderResponse<>(
+                dtos,
+                idPage.getNumber(),
+                idPage.getSize(),
+                idPage.getTotalElements(),
+                idPage.getTotalPages(),
+                counts
+        );
     }
 
     @Transactional(readOnly = true)
@@ -68,6 +141,58 @@ public class OrderService {
         return toDetailedDtos(orderRepository.findFullInfoByUserId(myId));
     }
 
+    @Transactional(readOnly = true)
+    public com.response.UserOrderResponse<OrderDTO> getOrdersByUserIdPaginated(int page, int size, String statusTab) {
+        Long myId = ((Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        
+        Page<Order> orderPage;
+        if (statusTab == null || "ALL".equalsIgnoreCase(statusTab)) {
+            orderPage = orderRepository.findByUserId(myId, pageable);
+        } else if ("PROCESSING".equalsIgnoreCase(statusTab)) {
+            List<Order.OrderStatus> statuses = List.of(Order.OrderStatus.CONFIRMED, Order.OrderStatus.PROCESSING);
+            orderPage = orderRepository.findByUserIdAndStatusIn(myId, statuses, pageable);
+        } else {
+            Order.OrderStatus status = Order.OrderStatus.valueOf(statusTab.toUpperCase());
+            orderPage = orderRepository.findByUserIdAndStatus(myId, status, pageable);
+        }
+        
+        Page<OrderDTO> dtoPage = orderPage.map(this::toDetailedDto);
+        
+        List<Object[]> rawCounts = orderRepository.countByStatusForUser(myId);
+        Map<String, Long> counts = new HashMap<>();
+        long total = 0;
+        long processingCount = 0;
+        
+        for (Object[] row : rawCounts) {
+            Order.OrderStatus status = (Order.OrderStatus) row[0];
+            Long count = (Long) row[1];
+            total += count;
+            
+            if (status == Order.OrderStatus.CONFIRMED || status == Order.OrderStatus.PROCESSING) {
+                processingCount += count;
+            }
+            
+            counts.put(status.name(), count);
+        }
+        counts.put("ALL", total);
+        counts.put("PROCESSING", processingCount);
+        
+        counts.putIfAbsent("PENDING", 0L);
+        counts.putIfAbsent("SHIPPING", 0L);
+        counts.putIfAbsent("DELIVERED", 0L);
+        counts.putIfAbsent("CANCELLED", 0L);
+        
+        return new UserOrderResponse<>(
+            dtoPage.getContent(),
+            dtoPage.getNumber(),
+            dtoPage.getSize(),
+            dtoPage.getTotalElements(),
+            dtoPage.getTotalPages(),
+            counts
+        );
+    }
+
     @Transactional
     public OrderDTO createOrder(OrderRequest request) {
         Long myId = ((Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
@@ -95,7 +220,7 @@ public class OrderService {
                 .customerName(customerAddress.getFullName())
                 .customerPhone(customerAddress.getPhone())
                 .shippingAddress(customerAddress.getDetailAddress())
-                .shippingFee(20000.0)
+                .shippingFee(calculateActualShippingFee(customerAddress, products, items))
                 .status(Order.OrderStatus.PENDING)
                 .paymentMethod(request.getPaymentMethod())
                 .paymentStatus(PaymentTransaction.PaymentStatus.UNPAID)
@@ -115,6 +240,8 @@ public class OrderService {
                     OrderItem newOrderItem = OrderItem.builder()
                             .order(newOrder)
                             .productVariant(product)
+                            .product(product.getProduct())
+                            .attributes(product.getAttributes())
                             .productName(product.getName())
                             .productSku(product.getSku())
                             .quantity(item.getQuantity())
@@ -251,10 +378,14 @@ public class OrderService {
                                 ? " - Đơn từ " + String.format("%,.0f", coupon.getMinOrderValue()) + "₫"
                                 : "");
             } catch (Exception ignored) {
-            } // Bỏ qua nếu mã sai/hết hạn
+            }
         }
 
+        CustomerAddress address = customerAddressRepository.findByIdAndUserId(request.getAddressId(), myId).orElse(null);
         double originalShippingFee = 20000;
+        if (address != null) {
+            originalShippingFee = calculateActualShippingFee(address, products, items);
+        }
 
         PromotionEngineService.PromotionContext promoCtx = new PromotionEngineService.PromotionContext(
                 subTotal, originalShippingFee, cartInfoList, myId);
@@ -292,6 +423,64 @@ public class OrderService {
         if (promotionDetails == null)
             return couponDetails;
         return couponDetails + " | " + promotionDetails;
+    }
+
+    private double calculateActualShippingFee(CustomerAddress address, List<ProductVariant> products, List<OrderRequest.Item> requestItems) {
+        if (address.getGhnDistrictId() == null || address.getGhnWardCode() == null) {
+            return 20000.0; // Fallback if GHN address is not set
+        }
+
+        List<Map<String, Object>> ghnItems = new ArrayList<>();
+        int totalWeight = 0;
+        int maxLength = 10;
+        int maxWidth = 10;
+        int maxHeight = 10;
+
+        for (OrderRequest.Item item : requestItems) {
+            ProductVariant variant = products.stream().filter(p -> p.getId().equals(item.getProductVariantId())).findFirst().orElse(null);
+            if (variant != null) {
+                Map<String, Object> ghnItem = new HashMap<>();
+                ghnItem.put("name", variant.getName() != null ? variant.getName() : "Sản phẩm");
+                ghnItem.put("quantity", item.getQuantity());
+                ghnItem.put("weight", 200); // Ước tính 200g
+                ghnItem.put("length", 10);
+                ghnItem.put("width", 10);
+                ghnItem.put("height", 5);
+                ghnItems.add(ghnItem);
+                
+                totalWeight += 200 * item.getQuantity();
+            }
+        }
+
+        try {
+            Long insuranceValue = subTotalForInsurance(products, requestItems);
+            Map<String, Object> feeResult = ghnService.calculateFee(
+                address.getGhnDistrictId(),
+                address.getGhnWardCode(),
+                totalWeight,
+                maxLength,
+                maxWidth,
+                maxHeight,
+                insuranceValue, 
+                null,
+                ghnItems
+            );
+            return Double.parseDouble(feeResult.get("total").toString());
+        } catch (Exception e) {
+            log.warn("Lỗi tính phí giao hàng GHN: {}", e.getMessage());
+            return 20000.0;
+        }
+    }
+
+    private Long subTotalForInsurance(List<ProductVariant> products, List<OrderRequest.Item> requestItems) {
+        double subTotal = 0.0;
+        for (OrderRequest.Item item : requestItems) {
+            ProductVariant variant = products.stream().filter(p -> p.getId().equals(item.getProductVariantId())).findFirst().orElse(null);
+            if (variant != null) {
+                subTotal += variant.getSalePrice() * item.getQuantity();
+            }
+        }
+        return (long) subTotal;
     }
 
     public List<Order> findByPaymentStatus(PaymentTransaction.PaymentStatus status) {
@@ -455,6 +644,140 @@ public class OrderService {
         logStatusChange(savedOrder, oldStatus, newStatus, req.getReason(), actionBy);
 
         return savedOrder;
+    }
+
+    // ── GHN Shipping Integration ──────────────────────────────────────────────
+
+    /**
+     * Tạo đơn vận chuyển GHN cho một đơn hàng đang ở trạng thái PROCESSING.
+     * Sau khi GHN tạo thành công:
+     *  - Lưu ghnOrderCode vào Order
+     *  - Cập nhật shippingFee từ phí GHN trả về
+     *  - Chuyển trạng thái đơn hàng sang SHIPPING
+     *  - Ghi lịch sử với thông tin ĐVVC/mã vận đơn
+     */
+    @Transactional
+    public Map<String, Object> createGHNShipping(Long orderId, GHNCreateShippingRequest req) {
+        Order order = findEntityById(orderId);
+
+        if (order.getStatus() != Order.OrderStatus.PROCESSING) {
+            throw new IllegalStateException(
+                "Chỉ có thể tạo vận đơn GHN cho đơn hàng đang ở trạng thái PROCESSING");
+        }
+
+        // Lấy địa chỉ giao hàng từ lịch sử đặt hàng
+        // (địa chỉ đã được lưu vào shippingAddress khi tạo đơn)
+        // Tìm CustomerAddress có ghnDistrictId/ghnWardCode
+        CustomerAddress address = customerAddressRepository
+            .findFirstByUserIdAndFullNameAndPhone(
+                order.getUser().getId(),
+                order.getCustomerName(),
+                order.getCustomerPhone())
+            .orElse(null);
+
+        Integer toDistrictId = address != null ? address.getGhnDistrictId() : null;
+        String toWardCode = address != null ? address.getGhnWardCode() : null;
+
+        if (toDistrictId == null || toWardCode == null) {
+            throw new IllegalArgumentException(
+                "Địa chỉ giao hàng chưa có thông tin GHN (district/ward code). " +
+                "Vui lòng yêu cầu khách cập nhật địa chỉ với thông tin GHN.");
+        }
+
+        // Build items list cho GHN
+        List<Map<String, Object>> ghnItems = order.getItems().stream()
+            .map(item -> {
+                Map<String, Object> ghnItem = new HashMap<>();
+                ghnItem.put("name", item.getProductName());
+                ghnItem.put("code", item.getProductVariant() != null ? item.getProductVariant().getName() : String.valueOf(item.getId()));
+                ghnItem.put("quantity", item.getQuantity());
+                ghnItem.put("price", item.getPrice() != null ? item.getPrice().longValue() : 0L);
+                
+                // Kích thước ước tính cho từng sản phẩm
+                ghnItem.put("length", 12);
+                ghnItem.put("width", 12);
+                ghnItem.put("height", 12);
+                // Ước tính 200g/item nếu không có dữ liệu cân nặng thực
+                ghnItem.put("weight", 200);
+                
+                ghnItem.put("category", Map.of("level1", "Quần áo")); // Bắt buộc cho một số gói dịch vụ
+                return ghnItem;
+            })
+            .collect(Collectors.toList());
+
+        // Lấy items từ request nếu có (override)
+        if (req.getItems() != null && !req.getItems().isEmpty()) {
+            ghnItems = req.getItems();
+        }
+
+        // Xác định COD: nếu đơn chưa thanh toán và là COD thì thu hộ
+        long codAmount = req.getCodAmount() != null ? req.getCodAmount() : 0L;
+        if (codAmount == 0 &&
+            order.getPaymentStatus() == PaymentTransaction.PaymentStatus.UNPAID &&
+            order.getPaymentMethod() == PaymentTransaction.PaymentMethod.COD) {
+            codAmount = order.getTotal().longValue();
+        }
+
+        GHNService.CreateGHNOrderRequest ghnRequest = GHNService.CreateGHNOrderRequest.builder()
+            .toName(order.getCustomerName())
+            .toPhone(order.getCustomerPhone())
+            .toAddress(order.getShippingAddress())
+            .toWardCode(toWardCode)
+            .toDistrictId(toDistrictId)
+            .weight(req.getWeight())
+            .length(req.getLength())
+            .width(req.getWidth())
+            .height(req.getHeight())
+            .serviceTypeId(req.getServiceTypeId())
+            .paymentTypeId(req.getPaymentTypeId())
+            .requiredNote(req.getRequiredNote())
+            .codAmount(codAmount)
+            .insuranceValue(req.getInsuranceValue() != null ? req.getInsuranceValue() : order.getTotal().longValue())
+            .clientOrderCode(order.getOrderNumber())
+            .note(req.getNote())
+            .items(ghnItems)
+            .build();
+
+        // Gọi GHN API
+        Map<String, Object> ghnResult = ghnService.createShippingOrder(ghnRequest);
+
+        String ghnOrderCode = (String) ghnResult.get("order_code");
+        Object totalFeeObj = ghnResult.get("total_fee");
+        double ghnShippingFee = totalFeeObj != null ? ((Number) totalFeeObj).doubleValue() : order.getShippingFee();
+
+        // Parse expected delivery time
+        LocalDateTime expectedDelivery = null;
+        try {
+            Object expectedObj = ghnResult.get("expected_delivery_time");
+            if (expectedObj instanceof String) {
+                expectedDelivery = LocalDateTime.parse(
+                    ((String) expectedObj).replace(" +0700 +0700", "").trim(),
+                    java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            }
+        } catch (Exception e) {
+            log.warn("Cannot parse GHN expected delivery time: {}", e.getMessage());
+        }
+
+        // Cập nhật Order
+        order.setGhnOrderCode(ghnOrderCode);
+        order.setGhnExpectedDeliveryTime(expectedDelivery);
+        
+        // Chỉ lưu lại phí thực tế phải trả cho GHN, KHÔNG thay đổi phí khách hàng đã đặt
+        order.setActualShippingFee(ghnShippingFee);
+        
+        order.setStatus(Order.OrderStatus.SHIPPING);
+        Order saved = orderRepository.save(order);
+
+        // Ghi lịch sử với thông tin ĐVVC (định dạng cho frontend parse)
+        String shippingNote = "ĐVVC: GHN | Shipper: N/A | Mã vận đơn: " + ghnOrderCode;
+        logStatusChange(saved, Order.OrderStatus.PROCESSING, Order.OrderStatus.SHIPPING,
+            shippingNote, getCurrentUser());
+
+        Map<String, Object> result = new HashMap<>(ghnResult);
+        result.put("orderId", orderId);
+        result.put("ghnOrderCode", ghnOrderCode);
+        result.put("shippingFee", ghnShippingFee);
+        return result;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

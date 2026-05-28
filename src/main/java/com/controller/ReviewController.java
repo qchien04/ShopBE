@@ -6,6 +6,8 @@ import com.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 @RestController
 
 @RequestMapping("/reviews/products/{productId}/reviews")
@@ -16,8 +18,13 @@ public class ReviewController {
 
     // Lấy danh sách review
     @GetMapping
-    public ResponseEntity<ReviewSummary> getReviews(@PathVariable Long productId) {
-        return ResponseEntity.ok(reviewService.getReviews(productId));
+    public ResponseEntity<ReviewSummary> getReviews(
+            @PathVariable Long productId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(reviewService.getReviews(productId, pageable));
     }
 
     // Thêm review (cần đăng nhập)

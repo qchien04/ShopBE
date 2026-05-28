@@ -19,6 +19,7 @@ public class OrderDTO {
     private String shippingAddress;
     private Double subtotal;
     private Double shippingFee;
+    private Double actualShippingFee;
     private Double discount;
     private String couponCode;
     private String couponDetails;
@@ -37,4 +38,8 @@ public class OrderDTO {
     private String internalNote;
     private List<OrderStatusHistoryDTO> statusHistory;
 
+    // GHN shipping integration
+    private String ghnOrderCode;
+    private LocalDateTime ghnExpectedDeliveryTime;
 }
+

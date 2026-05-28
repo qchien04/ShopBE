@@ -194,8 +194,6 @@ public class ProductRagService {
         }
     }
 
-    // --- Main chat with Python Agent ---
-
     public AiResponse ask(String question, List<Map<String, String>> history) {
         try {
             String authHeader = getCurrentRequest().getHeader("Authorization");
@@ -229,5 +227,5 @@ public class ProductRagService {
         }
     }
 
-    private final org.springframework.web.reactive.function.client.WebClient webClient = org.springframework.web.reactive.function.client.WebClient.create("http://python-agent:8000");
+    private final org.springframework.web.reactive.function.client.WebClient webClient = org.springframework.web.reactive.function.client.WebClient.create("http://localhost:8000");
 }

@@ -7,7 +7,6 @@ public class UpdateCategoryRequest {
     private String description;
     private String slug;
     private String image;
-    private String icon;
 
     private Long parentId;
 }

@@ -12,13 +12,17 @@ import com.repository.ReviewRepository;
 import com.repository.UserAccountRepo;
 import com.repository.OrderItemRepository;
 import com.request.ReviewRequest;
+import com.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -57,26 +61,50 @@ public class ReviewService {
         return toResponse(reviewRepository.save(review));
     }
 
-    public ReviewSummary getReviews(Long productId) {
-        List<ReviewDTO> reviews = reviewRepository
-                .findByProductIdAndStatusOrderByCreatedAtDesc(productId, Review.ReviewStatus.APPROVED)
-                .stream()
-                .map(this::toResponse)
-                .toList();
+    public ReviewSummary getReviews(Long productId, Pageable pageable) {
+        Page<ReviewDTO> page = reviewRepository
+                .findByProductIdAndStatusOrderByCreatedAtDesc(productId, Review.ReviewStatus.APPROVED, pageable)
+                .map(this::toResponse);
 
         Double avg = reviewRepository.findAverageRatingByProductId(productId);
         Long total = reviewRepository.countApprovedByProductId(productId);
 
+        List<Object[]> statsResult =
+                reviewRepository.countRatingByStar(productId);
+
+        List<Long> ratingStatistics = new ArrayList<>();
+
+        for (int i = 0; i < 5; i++) {
+            ratingStatistics.add(0L);
+        }
+
+        for (Object[] row : statsResult) {
+            Integer rating = (Integer) row[0];
+            Long count = (Long) row[1];
+            // rating 5 -> index 4
+            ratingStatistics.set(rating - 1, count);
+        }
+
+        PageResponse<ReviewDTO> pageResponse = new PageResponse<>(
+                page.getContent(),
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages()
+        );
+
         return new ReviewSummary(
                 avg != null ? Math.round(avg * 10.0) / 10.0 : 0.0,
                 total,
-                reviews
+                pageResponse,
+                ratingStatistics
         );
     }
 
     private ReviewDTO toResponse(Review review) {
         return new ReviewDTO(
                 review.getId(),
+                review.getProduct().getId(),
                 review.getProduct().getName(),
                 review.getUser().getFullName(),
                 review.getUser().getAvt(),

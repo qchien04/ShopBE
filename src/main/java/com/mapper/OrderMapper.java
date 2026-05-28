@@ -11,6 +11,7 @@ import java.util.List;
 @Mapper(componentModel = "spring",uses = {
         OrderItemMapper.class,
 })
+// Force rebuild for actualShippingFee
 public interface OrderMapper {
 
     @Mapping(target = "userId", source = "user.id")

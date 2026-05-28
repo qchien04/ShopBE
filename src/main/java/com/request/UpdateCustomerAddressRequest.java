@@ -14,4 +14,8 @@ public class UpdateCustomerAddressRequest {
     private Double lat;
     private Double lng;
     private Boolean isDefault = false;
+    // GHN fields
+    private Integer ghnProvinceId;
+    private Integer ghnDistrictId;
+    private String ghnWardCode;
 }

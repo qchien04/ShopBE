@@ -21,13 +21,15 @@ public class CustomerAddress {
 
     private String fullName;
     private String phone;
-    private String province;
-    private String district;
-    private String ward;
     private String detailAddress;
     private Boolean isDefault = false;
     private Double lat;
     private Double lng;
+
+    // GHN fields for shipping integration
+    private Integer ghnProvinceId;
+    private Integer ghnDistrictId;
+    private String ghnWardCode;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -35,3 +37,4 @@ public class CustomerAddress {
     @UpdateTimestamp
     private LocalDateTime updateAt;
 }
+

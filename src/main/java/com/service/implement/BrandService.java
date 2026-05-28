@@ -2,6 +2,7 @@ package com.service.implement;
 
 import com.entity.Brand;
 import com.entity.Category;
+import com.exception.InvalidRequestException;
 import com.exception.NotFoundObjectRequestException;
 import com.mapper.CartMapper;
 import com.mapper.CategoryMapper;
@@ -73,6 +74,9 @@ public class BrandService {
 
     @Transactional
     public Brand createBrand(CreateBrandRequest r) {
+        if (brandRepository.findBySlug(r.getSlug()).isPresent()) {
+            throw new InvalidRequestException("Slug thương hiệu đã tồn tại!");
+        }
         Brand brand=Brand.builder()
                 .name(r.getName())
                 .slug(r.getSlug())
@@ -86,6 +90,11 @@ public class BrandService {
     @Transactional
     public Brand updateBrand(Long id, UpdateBrandRequest request) {
         Brand brand = brandRepository.findById(id).orElseThrow(()->new NotFoundObjectRequestException("Brand not found!"));
+        brandRepository.findBySlug(request.getSlug()).ifPresent(existingBrand -> {
+            if (!existingBrand.getId().equals(id)) {
+                throw new InvalidRequestException("Slug thương hiệu đã tồn tại!");
+            }
+        });
         brand.setName(request.getName());
         brand.setDescription(request.getDescription());
         brand.setLogo(request.getLogo());

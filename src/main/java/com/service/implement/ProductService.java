@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.data.domain.Pageable;
 
+import org.springframework.data.domain.Sort;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.WeekFields;
@@ -40,7 +41,7 @@ public class ProductService {
     private final ProductEmbeddingService productEmbeddingService;
 
     public Page<ProductDTO> getAllProducts(int page, int size, String keyword) {
-        if(keyword == null || keyword.isBlank()) {
+        if (keyword == null || keyword.isBlank()) {
             keyword = "";
         }
 
@@ -127,7 +128,7 @@ public class ProductService {
             String sort,
             Long minPrice,
             Long maxPrice) {
-        PageRequest pageRequest = PageRequest.of(page, size);
+        PageRequest pageRequest = PageRequest.of(page, size, getSort(sort));
         List<Category> categories = categoryRepository.findAllSubCategories(categoryId);
 
         List<Long> categoryIds = categories.stream()
@@ -148,7 +149,6 @@ public class ProductService {
         Page<Product> products = productRepository.findWithFilter(
                 categoryIds,
                 brandIds,
-                sort,
                 minPrice,
                 maxPrice, pageRequest);
 
@@ -162,7 +162,7 @@ public class ProductService {
             String sort,
             Long minPrice,
             Long maxPrice) {
-        PageRequest pageRequest = PageRequest.of(page, size);
+        PageRequest pageRequest = PageRequest.of(page, size, getSort(sort));
         List<Category> categories = productRepository.findCategoriesByBrandId(brandId);
 
         List<Long> categoryIds = categories.stream()
@@ -184,31 +184,57 @@ public class ProductService {
         Page<Product> products = productRepository.findWithFilter(
                 categoryIds,
                 brandIds,
-                sort,
                 minPrice,
                 maxPrice, pageRequest);
 
         return products.map(productMapper::toDto);
     }
 
-
-
     @Transactional
     public Page<ProductDTO> searchProducts(String keyword, int page, int size, long minPrice,
             long maxPrice, List<Long> brandIds,
-            List<Long> subCategoryIds, String sort, boolean inStock) {
-        if(keyword == null || keyword.isBlank()) {
+            List<Long> subCategoryIds, String sort, Boolean inStock) {
+        if (keyword == null || keyword.isBlank()) {
             keyword = "";
         }
-        PageRequest pageRequest = PageRequest.of(page, size);
+        PageRequest pageRequest = PageRequest.of(page, size, getSort(sort));
+        
+        List<Long> expandedCategoryIds = null;
+        if (subCategoryIds != null && !subCategoryIds.isEmpty()) {
+            expandedCategoryIds = new ArrayList<>();
+            for (Long cid : subCategoryIds) {
+                List<Category> subCats = categoryRepository.findAllSubCategories(cid);
+                for (Category c : subCats) {
+                    expandedCategoryIds.add(c.getId());
+                }
+            }
+            expandedCategoryIds = expandedCategoryIds.stream().distinct().toList();
+        }
+
         Page<Product> products = productRepository.search(keyword, minPrice, maxPrice, brandIds,
-                subCategoryIds, sort, inStock,
+                expandedCategoryIds, inStock,
                 pageRequest);
         return products.map(productMapper::toDto);
     }
 
+    private Sort getSort(String sort) {
+        if (sort == null)
+            return Sort.by(Sort.Direction.DESC, "id");
+        return switch (sort) {
+            case "name_asc" -> Sort.by(Sort.Direction.ASC, "name").and(Sort.by(Sort.Direction.DESC, "id"));
+            case "name_desc" -> Sort.by(Sort.Direction.DESC, "name").and(Sort.by(Sort.Direction.DESC, "id"));
+            case "price_asc" -> Sort.by(Sort.Direction.ASC, "salePrice").and(Sort.by(Sort.Direction.DESC, "id"));
+            case "price_desc" -> Sort.by(Sort.Direction.DESC, "salePrice").and(Sort.by(Sort.Direction.DESC, "id"));
+            default -> Sort.by(Sort.Direction.DESC, "id");
+        };
+    }
+
     @Transactional
     public ProductDTO createProduct(CreateProductRequest request) {
+
+        if (productRepository.findBySlug(request.getSlug()).isPresent()) {
+            throw new InvalidRequestException("Slug sản phẩm đã tồn tại!");
+        }
 
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new NotFoundObjectRequestException("Category not found"));
@@ -227,6 +253,7 @@ public class ProductService {
                 .mainImage(request.getMainImage())
                 .category(category)
                 .brand(brand)
+                .soldCount(0)
                 .build();
 
         List<ProductVariant> productVariants = new ArrayList<>();
@@ -242,6 +269,7 @@ public class ProductService {
                         .stockQuantity(i.getStockQuantity())
                         .mainImage(i.getMainImage())
                         .attributes(i.getAttributes())
+                        .soldCount(0)
                         .build();
                 productVariants.add(productVariant);
             }
@@ -253,6 +281,7 @@ public class ProductService {
                     .price(newProduct.getPrice())
                     .salePrice(newProduct.getSalePrice())
                     .stockQuantity(newProduct.getStockQuantity())
+                    .soldCount(0)
                     .mainImage(newProduct.getMainImage())
                     .attributes(new HashMap<>())
                     .build();
@@ -280,6 +309,13 @@ public class ProductService {
 
     @Transactional
     public ProductDTO updateProduct(Long id, UpdateProductRequest request) {
+
+        productRepository.findBySlug(request.getSlug()).ifPresent(existingProduct -> {
+            if (!existingProduct.getId().equals(id)) {
+                throw new InvalidRequestException("Slug sản phẩm đã tồn tại!");
+            }
+        });
+
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new NotFoundObjectRequestException("Category not found"));
 

@@ -1,6 +1,7 @@
 package com.service;
 
 import com.DTO.HomePageConfigDTO;
+import com.DTO.ShippingConfigDTO;
 import com.entity.Config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.repository.ConfigRepository;
@@ -38,6 +39,33 @@ public class ConfigService {
             return dto;
         } catch (Exception e) {
             throw new RuntimeException("Không thể lưu banner config", e);
+        }
+    }
+
+    private static final String SHIPPING_KEY = "shipping_config";
+
+    public ShippingConfigDTO getShippingConfig() {
+        return configRepository.findByConfigKey(SHIPPING_KEY)
+                .map(c -> {
+                    try {
+                        return objectMapper.readValue(c.getConfigValue(), ShippingConfigDTO.class);
+                    } catch (Exception e) {
+                        return new ShippingConfigDTO();
+                    }
+                })
+                .orElse(new ShippingConfigDTO());
+    }
+
+    public ShippingConfigDTO saveShippingConfig(ShippingConfigDTO dto) {
+        try {
+            String json = objectMapper.writeValueAsString(dto);
+            Config config = configRepository.findByConfigKey(SHIPPING_KEY)
+                    .orElse(Config.builder().configKey(SHIPPING_KEY).build());
+            config.setConfigValue(json);
+            configRepository.save(config);
+            return dto;
+        } catch (Exception e) {
+            throw new RuntimeException("Không thể lưu shipping config", e);
         }
     }
 }

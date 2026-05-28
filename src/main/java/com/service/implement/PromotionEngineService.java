@@ -49,6 +49,7 @@ public class PromotionEngineService {
         List<AppliedPromotion> appliedList = new ArrayList<>();
 
         for (Promotion promotion : activePromotions) {
+            System.out.println(promotion.getDescription());
             Optional<AppliedPromotion> result = applyPromotion(promotion, context);
             result.ifPresent(appliedList::add);
         }
@@ -57,7 +58,7 @@ public class PromotionEngineService {
         double totalDiscount = appliedList.stream()
                 .mapToDouble(AppliedPromotion::discountAmount)
                 .sum();
-        totalDiscount = Math.min(totalDiscount, context.getSubtotal());
+        totalDiscount = Math.min(totalDiscount, context.getSubtotal()+context.getShippingFee());
 
         return new PromotionResult(totalDiscount, appliedList);
     }
@@ -158,10 +159,6 @@ public class PromotionEngineService {
         return promotionRepository.save(p);
     }
 
-    // ══════════════════════════════════════════════════════════════════
-    // PRIVATE ENGINES
-    // ══════════════════════════════════════════════════════════════════
-
     private Optional<AppliedPromotion> applyPromotion(Promotion promotion, PromotionContext context) {
         return switch (promotion.getType()) {
             case ORDER_TIER -> applyOrderTier(promotion, context);
@@ -208,13 +205,12 @@ public class PromotionEngineService {
                 .filter(i -> i.categoryId() != null && catSet.contains(i.categoryId()))
                 .mapToDouble(i -> i.price() * i.quantity())
                 .sum();
-
         if (categorySubtotal <= 0)
             return Optional.empty();
 
         double discount = calcDiscount(p.getDiscountValue(), p.getDiscountType(),
                 categorySubtotal, null);
-
+        System.out.println(discount);
         String desc = String.format("Giảm %s danh mục - %s",
                 formatDiscount(p.getDiscountValue(), p.getDiscountType()), p.getName());
 
