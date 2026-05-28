@@ -226,6 +226,7 @@ public class ProductRagService {
             return fallback;
         }
     }
+    private final org.springframework.web.reactive.function.client.WebClient webClient = org.springframework.web.reactive.function.client.WebClient.create("http://python-agent:8000");
 
-    private final org.springframework.web.reactive.function.client.WebClient webClient = org.springframework.web.reactive.function.client.WebClient.create("http://localhost:8000");
+//    private final org.springframework.web.reactive.function.client.WebClient webClient = org.springframework.web.reactive.function.client.WebClient.create("http://localhost:8000");
 }
