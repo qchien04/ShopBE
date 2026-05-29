@@ -252,6 +252,7 @@ public class ProductService {
                 .mainImage(request.getMainImage())
                 .category(category)
                 .brand(brand)
+                .viewCount(0)
                 .soldCount(0)
                 .build();
 
@@ -314,16 +315,12 @@ public class ProductService {
                 throw new InvalidRequestException("Slug sản phẩm đã tồn tại!");
             }
         });
-        System.out.println("4");
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new NotFoundObjectRequestException("Category not found"));
-        System.out.println("3");
         Brand brand = brandRepository.findById(request.getBrandId())
                 .orElseThrow(() -> new NotFoundObjectRequestException("Brand not found"));
-        System.out.println("2");
         Product product = productRepository.findWithDetailById(id).orElseThrow(
                 () -> new NotFoundObjectRequestException("Không tìm thấy sản phẩm!"));
-        System.out.println("1");
         product.setName(request.getName());
 
         product.setSlug(request.getSlug());
