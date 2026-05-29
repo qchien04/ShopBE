@@ -24,6 +24,8 @@ public interface UserAccountService{
     public AuthRespone login(LoginRequest request);
     public AuthRespone loginWithGoogle(Map<String, String> request);
     public boolean changePass(ChangePasswordRequest request);
+    public boolean forgotPassword(String email) throws MessagingException;
+    public boolean resetPassword(com.request.ResetPasswordRequest request);
 
     public UserAccountDTO getProfile(long id);
 

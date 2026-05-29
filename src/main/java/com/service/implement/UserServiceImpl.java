@@ -279,6 +279,55 @@ public class UserServiceImpl implements UserDetailsService, UserAccountService {
     }
 
     @Override
+    public boolean forgotPassword(String email) throws MessagingException {
+        User user = findByEmail(email);
+        if (user == null) {
+            throw new UserAccountException("Không tìm thấy tài khoản với email này!");
+        }
+
+        // 1. Generate OTP
+        String otp = String.valueOf(100000 + new Random().nextInt(900000));
+
+        OTPCode otpCode = new OTPCode(otp, email, 5);
+        otpCodeService.saveOTPCode(otpCode);
+
+        // 3. Email content (HTML)
+        String content = """
+                <h3>Quên mật khẩu</h3>
+                <p>Mã OTP để đặt lại mật khẩu của bạn là: <b>%s</b></p>
+                <p>Mã OTP có hiệu lực trong 5 phút.</p>
+                """.formatted(otp);
+
+        // 4. Send mail
+        mailService.sendEmail(
+                email,
+                "Lấy lại mật khẩu",
+                content,
+                null);
+                
+        return true;
+    }
+
+    @Override
+    public boolean resetPassword(com.request.ResetPasswordRequest request) {
+        OTPCode otp = otpCodeService.findOTPCode(request.getEmail(), request.getOtp());
+        if (otp == null) {
+            throw new UserAccountException("Mã OTP không chính xác hoặc đã hết hạn!");
+        }
+
+        User user = findByEmail(request.getEmail());
+        if (user == null) {
+            throw new UserAccountException("Không tìm thấy tài khoản!");
+        }
+
+        String newHashPass = passwordEncoder.encode(request.getNewPassword());
+        user.setPassword(newHashPass);
+        userAccountRepo.save(user);
+
+        return true;
+    }
+
+    @Override
     public UserAccountDTO getProfile(long id) {
         System.out.println(id);
         Optional<User> userAccount = userAccountRepo.findByIdWithRole(id);

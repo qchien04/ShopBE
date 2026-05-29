@@ -16,38 +16,38 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 
-
 @RestController
 @RequestMapping("/auth")
 
 public class AuthController {
     private UserAccountService userService;
 
-    public AuthController(UserAccountService userAccountService){
-        this.userService=userAccountService;
+    public AuthController(UserAccountService userAccountService) {
+        this.userService = userAccountService;
     }
 
     @Value("${domain}")
     private String domain;
 
     @PostMapping("/register")
-    public ResponseEntity<?> createUserHandler(@RequestBody UserRegisterRequest userRegister) throws UserAccountException, MessagingException {
+    public ResponseEntity<?> createUserHandler(@RequestBody UserRegisterRequest userRegister)
+            throws UserAccountException, MessagingException {
 
         userService.register(userRegister);
 
-        ApiResponse apiResponse=new ApiResponse("Đăng kí thành công, vui lòng kiểm tra email để kích hoạt tài khoản!",true);
+        ApiResponse apiResponse = new ApiResponse("Đăng kí thành công, vui lòng kiểm tra email để kích hoạt tài khoản!",
+                true);
         return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.OK);
     }
-
 
     @GetMapping("/auth-account")
     public ResponseEntity<Void> authAccountHandler(
             @RequestParam("key") String key,
-            @RequestParam("email") String email){
+            @RequestParam("email") String email) {
 
-        AuthRespone res=userService.authAccount(email,key);
-        String frontendUrl = domain+"/login";
-        if (res!=null) {
+        AuthRespone res = userService.authAccount(email, key);
+        String frontendUrl = domain + "/login";
+        if (res != null) {
             URI uri = URI.create(frontendUrl + "?verified=true");
             return ResponseEntity.status(HttpStatus.FOUND)
                     .location(uri)
@@ -63,7 +63,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthRespone> loginHandler(@RequestBody LoginRequest loginRequest) {
 
-        AuthRespone res=userService.login(loginRequest);
+        AuthRespone res = userService.login(loginRequest);
         return new ResponseEntity<AuthRespone>(res, HttpStatus.OK);
 
     }
@@ -71,12 +71,33 @@ public class AuthController {
     @PostMapping("/changePassword")
     public ResponseEntity<ApiResponse> changePasswordHandler(@RequestBody ChangePasswordRequest changePasswordRequest) {
 
-        boolean success=userService.changePass(changePasswordRequest);
-        ApiResponse response=new ApiResponse("Fail",false);;
-        if(success){
-            response=new ApiResponse("Success",true);
+        boolean success = userService.changePass(changePasswordRequest);
+        ApiResponse response = new ApiResponse("Fail", false);
+        ;
+        if (success) {
+            response = new ApiResponse("Success", true);
         }
         return new ResponseEntity<ApiResponse>(response, HttpStatus.OK);
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse> forgotPasswordHandler(@RequestBody com.request.ForgotPasswordRequest request)
+            throws MessagingException {
+        boolean success = userService.forgotPassword(request.getEmail());
+        if (success) {
+            return new ResponseEntity<>(new ApiResponse("Vui lòng kiểm tra email để nhận mã OTP!", true),
+                    HttpStatus.OK);
+        }
+        return new ResponseEntity<>(new ApiResponse("Gửi yêu cầu thất bại", false), HttpStatus.BAD_REQUEST);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse> resetPasswordHandler(@RequestBody com.request.ResetPasswordRequest request) {
+        boolean success = userService.resetPassword(request);
+        if (success) {
+            return new ResponseEntity<>(new ApiResponse("Đặt lại mật khẩu thành công!", true), HttpStatus.OK);
+        }
+        return new ResponseEntity<>(new ApiResponse("Đặt lại mật khẩu thất bại", false), HttpStatus.BAD_REQUEST);
     }
 
 }

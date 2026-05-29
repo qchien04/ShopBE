@@ -1,7 +1,5 @@
-package com.entity;
+package com.request;
 
-
-import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
