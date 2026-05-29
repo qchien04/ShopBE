@@ -96,5 +96,8 @@ jobs:
             docker compose pull backend
             docker compose up -d --no-deps --force-recreate backend
             docker image prune -f
+            
+            chmod -R 777 $WORK_DIR/uploads
+            chmod -R 777 $WORK_DIR/streams
 
             echo "Deploy thành công!"
