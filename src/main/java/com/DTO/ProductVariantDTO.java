@@ -9,7 +9,7 @@ public class ProductVariantDTO {
     private Long id;
     private Long productId;
     private String name;
-    private String sku;
+
     private Double price;
     private Double salePrice;
     private Integer stockQuantity;

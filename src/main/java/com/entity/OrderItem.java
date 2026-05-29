@@ -32,7 +32,7 @@ public class OrderItem {
     private Map<String, String> attributes;
 
     private String productName;
-    private String productSku;
+    private String productSlug;
     private String productImage;
     private Integer quantity;
     private Double price;

@@ -20,8 +20,6 @@ public class Product {
     private String name;
 
     @Column(unique = true)
-    private String sku;
-
     private String slug;
 
     @Column(columnDefinition = "TEXT")

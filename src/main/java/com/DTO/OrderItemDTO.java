@@ -11,7 +11,7 @@ public class OrderItemDTO {
     private Long productVariantId;
     private Long productId;
     private String productName;
-    private String productSku;
+    private String productSlug;
     private Map<String, String> attributes;
     private String productImage;
     private Integer quantity;

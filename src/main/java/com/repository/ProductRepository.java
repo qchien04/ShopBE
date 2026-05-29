@@ -20,7 +20,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @EntityGraph(attributePaths = { "images", "productVariants", "category", "brand" })
     Optional<Product> findBySlug(String slug);
 
-    Optional<Product> findBySku(String sku);
+
 
     List<Product> findByCategoryId(Long categoryId);
 
@@ -78,7 +78,15 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT p FROM Product p WHERE p.salePrice IS NOT NULL AND p.salePrice < p.price")
     List<Product> findProductsOnSale();
 
-    @EntityGraph(attributePaths = { "images", "productVariants", "category", "brand" })
+    @Query("""
+        SELECT p
+        FROM Product p
+        LEFT JOIN FETCH p.images
+        LEFT JOIN FETCH p.productVariants
+        LEFT JOIN FETCH p.category
+        LEFT JOIN FETCH p.brand
+        WHERE p.id = :id
+    """)
     Optional<Product> findWithDetailById(Long id);
 
     @Query("SELECT p FROM Product p ORDER BY p.createdAt DESC")

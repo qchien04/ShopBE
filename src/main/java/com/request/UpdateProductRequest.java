@@ -9,7 +9,7 @@ import java.util.List;
 public class UpdateProductRequest {
     private Long id;
     private String name;
-    private String sku;
+
     private String slug;
     private String shortDescription;
     private String fullDescription;

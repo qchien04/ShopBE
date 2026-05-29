@@ -12,7 +12,7 @@ import java.util.Set;
 public class ProductDTO {
     private Long id;
     private String name;
-    private String sku;
+
     private String slug;
     private String shortDescription;
     private String fullDescription;

@@ -8,7 +8,7 @@ import java.util.List;
 @Data
 public class CreateProductRequest {
     private String name;
-    private String sku;
+
     private String slug;
     private String shortDescription;
     private String fullDescription;

@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 public class TopProductDTO {
     private Long id;
     private String name;
-    private String sku;
+
     private String mainImage;
     private String brand;
     private String category;

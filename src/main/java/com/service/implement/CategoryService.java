@@ -32,18 +32,20 @@ public class CategoryService {
         return categoryMapper.toFullDtos(categories);
     }
 
-    public Category getCategoryById(Long id) {
-        return categoryRepository.findById(id)
+    public CategoryDTO getCategoryById(Long id) {
+        Category category= categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
+        return categoryMapper.toDto(category);
     }
 
-    public Category getCategoryBySlug(String slug) {
-        return categoryRepository.findBySlug(slug)
+    public CategoryDTO getCategoryBySlug(String slug) {
+        Category category= categoryRepository.findBySlug(slug)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
+        return categoryMapper.toDto(category);
     }
 
     @Transactional
-    public Category createCategory(CreateCategoryRequest r) {
+    public CategoryDTO createCategory(CreateCategoryRequest r) {
         if (categoryRepository.findBySlug(r.getSlug()).isPresent()) {
             throw new InvalidRequestException("Slug danh mục đã tồn tại!");
         }
@@ -55,16 +57,19 @@ public class CategoryService {
                 .build();
 
         if (r.getParentId() != null) {
-            Category parent = getCategoryById(r.getParentId());
+            Category parent = categoryRepository.findById(r.getParentId())
+                    .orElseThrow(()->new NotFoundObjectRequestException("Không tìm thấy danh mục cha!"));;
             category.setParent(parent);
         }
 
-        return categoryRepository.save(category);
+        Category returnCategory= categoryRepository.save(category);
+
+        return categoryMapper.toDto(returnCategory);
     }
 
     @Transactional
-    public Category updateCategory(Long id, UpdateCategoryRequest request) {
-        Category category = getCategoryById(id);
+    public CategoryDTO updateCategory(Long id, UpdateCategoryRequest request) {
+        Category category = categoryRepository.findById(id).orElseThrow(()->new NotFoundObjectRequestException("Không tìm thấy sản phẩm!"));
         categoryRepository.findBySlug(request.getSlug()).ifPresent(existingCategory -> {
             if (!existingCategory.getId().equals(id)) {
                 throw new InvalidRequestException("Slug danh mục đã tồn tại!");
@@ -79,13 +84,14 @@ public class CategoryService {
             if (request.getParentId().equals(id)) {
                 throw new RuntimeException("Category cannot be its own parent");
             }
-            Category parent = getCategoryById(request.getParentId());
+            Category parent = categoryRepository.findById(request.getParentId()).orElseThrow(()->new NotFoundObjectRequestException("Không tìm thấy sản phẩm!"));
             category.setParent(parent);
         } else {
             category.setParent(null);
         }
 
-        return categoryRepository.save(category);
+        Category returnCategory= categoryRepository.save(category);
+        return categoryMapper.toDto(returnCategory);
     }
 
     @Transactional

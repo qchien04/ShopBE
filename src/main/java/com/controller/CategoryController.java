@@ -32,22 +32,22 @@ public class CategoryController {
     }
 
     @GetMapping("/{id:\\d+}")
-    public ResponseEntity<Category> getCategoryById(@PathVariable Long id) {
+    public ResponseEntity<CategoryDTO> getCategoryById(@PathVariable Long id) {
         return ResponseEntity.ok(categoryService.getCategoryById(id));
     }
 
     @GetMapping("/slug/{slug}")
-    public ResponseEntity<Category> getCategoryBySlug(@PathVariable String slug) {
+    public ResponseEntity<CategoryDTO> getCategoryBySlug(@PathVariable String slug) {
         return ResponseEntity.ok(categoryService.getCategoryBySlug(slug));
     }
 
     @PostMapping
-    public ResponseEntity<Category> createCategory(@RequestBody CreateCategoryRequest request) {
+    public ResponseEntity<CategoryDTO> createCategory(@RequestBody CreateCategoryRequest request) {
         return ResponseEntity.ok(categoryService.createCategory(request));
     }
 
     @PutMapping("/{id:\\d+}")
-    public ResponseEntity<Category> updateCategory(@PathVariable Long id,
+    public ResponseEntity<CategoryDTO> updateCategory(@PathVariable Long id,
                                                    @RequestBody UpdateCategoryRequest request) {
         return ResponseEntity.ok(categoryService.updateCategory(id, request));
     }

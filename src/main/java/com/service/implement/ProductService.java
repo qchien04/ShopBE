@@ -243,7 +243,6 @@ public class ProductService {
                 .orElseThrow(() -> new NotFoundObjectRequestException("Brand not found"));
         Product newProduct = Product.builder()
                 .name(request.getName())
-                .sku(request.getSku())
                 .slug(request.getSlug())
                 .shortDescription(request.getShortDescription())
                 .fullDescription(request.getFullDescription())
@@ -263,7 +262,7 @@ public class ProductService {
                 ProductVariant productVariant = ProductVariant.builder()
                         .product(newProduct)
                         .name(i.getName())
-                        .sku(i.getSku())
+
                         .price(i.getPrice())
                         .salePrice(i.getSalePrice())
                         .stockQuantity(i.getStockQuantity())
@@ -277,7 +276,7 @@ public class ProductService {
             ProductVariant defaultVariant = ProductVariant.builder()
                     .product(newProduct)
                     .name(newProduct.getName())
-                    .sku(newProduct.getSku() != null ? newProduct.getSku() : "SKU-" + System.currentTimeMillis())
+
                     .price(newProduct.getPrice())
                     .salePrice(newProduct.getSalePrice())
                     .stockQuantity(newProduct.getStockQuantity())
@@ -315,18 +314,18 @@ public class ProductService {
                 throw new InvalidRequestException("Slug sản phẩm đã tồn tại!");
             }
         });
-
+        System.out.println("4");
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new NotFoundObjectRequestException("Category not found"));
-
+        System.out.println("3");
         Brand brand = brandRepository.findById(request.getBrandId())
                 .orElseThrow(() -> new NotFoundObjectRequestException("Brand not found"));
-
+        System.out.println("2");
         Product product = productRepository.findWithDetailById(id).orElseThrow(
                 () -> new NotFoundObjectRequestException("Không tìm thấy sản phẩm!"));
-
+        System.out.println("1");
         product.setName(request.getName());
-        product.setSku(request.getSku());
+
         product.setSlug(request.getSlug());
         product.setShortDescription(request.getShortDescription());
         product.setFullDescription(request.getFullDescription());
@@ -344,7 +343,7 @@ public class ProductService {
                 ProductVariant productVariant = ProductVariant.builder()
                         .product(product)
                         .name(i.getName())
-                        .sku(i.getSku())
+
                         .price(i.getPrice())
                         .salePrice(i.getSalePrice())
                         .stockQuantity(i.getStockQuantity())
@@ -357,7 +356,7 @@ public class ProductService {
             ProductVariant defaultVariant = ProductVariant.builder()
                     .product(product)
                     .name(product.getName())
-                    .sku(product.getSku() != null ? product.getSku() : "SKU-" + System.currentTimeMillis())
+
                     .price(product.getPrice())
                     .salePrice(product.getSalePrice())
                     .stockQuantity(product.getStockQuantity())

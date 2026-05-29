@@ -151,7 +151,7 @@ public class DashboardService {
                                 .map(p -> TopProductDTO.builder()
                                                 .id(p.getId())
                                                 .name(p.getName())
-                                                .sku(p.getSku())
+
                                                 .mainImage(p.getMainImage())
                                                 .brand(p.getBrand() != null ? p.getBrand().getName() : null)
                                                 .category(p.getCategory() != null ? p.getCategory().getName() : null)
@@ -192,7 +192,7 @@ public class DashboardService {
                                 .map(p -> FeaturedProductDTO.builder()
                                                 .id(p.getId())
                                                 .name(p.getName())
-                                                .sku(p.getSku())
+
                                                 .mainImage(p.getMainImage())
                                                 .brand(p.getBrand() != null ? p.getBrand().getName() : null)
                                                 .category(p.getCategory() != null ? p.getCategory().getName() : null)

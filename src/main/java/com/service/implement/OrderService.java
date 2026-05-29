@@ -243,7 +243,7 @@ public class OrderService {
                             .product(product.getProduct())
                             .attributes(product.getAttributes())
                             .productName(product.getName())
-                            .productSku(product.getSku())
+                            .productSlug(product.getProduct().getSlug())
                             .quantity(item.getQuantity())
                             .productImage(product.getMainImage())
                             .price(product.getSalePrice())
