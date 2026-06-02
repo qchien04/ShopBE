@@ -4,8 +4,8 @@ import com.DTO.HomePageConfigDTO;
 import com.DTO.ReviewDTO;
 import com.DTO.ShippingConfigDTO;
 import com.DTO.dashboard.DashboardDTO;
+import com.constant.PaymentStatus;
 import com.entity.Order;
-import com.entity.PaymentTransaction;
 import com.entity.Review;
 import com.response.ApiResponse;
 import com.service.ConfigService;
@@ -66,7 +66,7 @@ public class AdminController {
 
     @PostMapping
     public ResponseEntity<ApiResponse> createCategory() {
-        List<Order> unpaidOrders = orderService.findByPaymentStatus(PaymentTransaction.PaymentStatus.UNPAID);
+        List<Order> unpaidOrders = orderService.findByPaymentStatus(PaymentStatus.UNPAID);
 
         for (Order order : unpaidOrders) {
             try {
@@ -75,7 +75,7 @@ public class AdminController {
 
                 if ("PAID".equals(String.valueOf(paymentLink.getStatus()))) {
                     System.out.println("Update "+order.getOrderNumber());
-                    orderService.updatePaymentStatus(order.getId(), PaymentTransaction.PaymentStatus.PAID,true);
+                    orderService.updatePaymentStatus(order.getId(), PaymentStatus.PAID,true);
                 }
 
             } catch (Exception e) {

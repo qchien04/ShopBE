@@ -1,8 +1,7 @@
 package com.scheduled;
 
+import com.constant.PaymentStatus;
 import com.entity.Order;
-import com.entity.PaymentTransaction;
-import com.repository.OrderRepository;
 import com.service.implement.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -23,7 +22,7 @@ public class OrderStatusScheduler {
     @Scheduled(cron = "0 0 2 * * ?")
     public void checkUnpaidOrders() {
 
-        List<Order> unpaidOrders = orderService.findByPaymentStatus(PaymentTransaction.PaymentStatus.UNPAID);
+        List<Order> unpaidOrders = orderService.findByPaymentStatus(PaymentStatus.UNPAID);
 
         for (Order order : unpaidOrders) {
             try {
@@ -31,7 +30,7 @@ public class OrderStatusScheduler {
                         .get(Long.parseLong(order.getOrderNumber().substring(3)));
 
                 if ("PAID".equals(paymentLink.getStatus())) {
-                    orderService.updatePaymentStatus(order.getId(), PaymentTransaction.PaymentStatus.PAID, true);
+                    orderService.updatePaymentStatus(order.getId(), PaymentStatus.PAID, true);
                 }
 
             } catch (Exception e) {

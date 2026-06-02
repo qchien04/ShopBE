@@ -248,13 +248,15 @@ public class ProductService {
                 .fullDescription(request.getFullDescription())
                 .price(request.getPrice())
                 .salePrice(request.getSalePrice())
-                .stockQuantity(request.getStockQuantity())
+                .stockQuantity(0) // Will be calculated from variants
                 .mainImage(request.getMainImage())
                 .category(category)
                 .brand(brand)
                 .viewCount(0)
                 .soldCount(0)
                 .build();
+
+        int totalStock = 0;
 
         List<ProductVariant> productVariants = new ArrayList<>();
         if (request.getProductVariants() != null && !request.getProductVariants().isEmpty()) {
@@ -271,6 +273,7 @@ public class ProductService {
                         .attributes(i.getAttributes())
                         .soldCount(0)
                         .build();
+                totalStock += (i.getStockQuantity() != null ? i.getStockQuantity() : 0);
                 productVariants.add(productVariant);
             }
         } else {
@@ -285,9 +288,10 @@ public class ProductService {
                     .mainImage(newProduct.getMainImage())
                     .attributes(new HashMap<>())
                     .build();
-            productVariants.add(defaultVariant);
-        }
+                productVariants.add(defaultVariant);
+            }
         newProduct.setProductVariants(productVariants);
+        newProduct.setStockQuantity(totalStock);
         newProduct = productRepository.save(newProduct);
 
         if (request.getImageIds() != null && !request.getImageIds().isEmpty()) {
@@ -328,12 +332,13 @@ public class ProductService {
         product.setFullDescription(request.getFullDescription());
         product.setPrice(request.getPrice());
         product.setSalePrice(request.getSalePrice());
-        product.setStockQuantity(request.getStockQuantity());
+        // stockQuantity will be calculated from variants
         product.setMainImage(request.getMainImage());
         product.setCategory(category);
         product.setBrand(brand);
 
         product.getProductVariants().clear();
+        int totalStock = 0;
         if (request.getProductVariants() != null && !request.getProductVariants().isEmpty()) {
             List<ProductVariantDTO> va = request.getProductVariants();
             for (ProductVariantDTO i : va) {
@@ -347,6 +352,7 @@ public class ProductService {
                         .mainImage(i.getMainImage())
                         .attributes(i.getAttributes())
                         .build();
+                totalStock += (i.getStockQuantity() != null ? i.getStockQuantity() : 0);
                 product.getProductVariants().add(productVariant);
             }
         } else {
@@ -362,6 +368,7 @@ public class ProductService {
                     .build();
             product.getProductVariants().add(defaultVariant);
         }
+        product.setStockQuantity(totalStock);
         // ===== update images =====
         product.getImages().forEach(img -> img.setProduct(null));
         product.getImages().clear();

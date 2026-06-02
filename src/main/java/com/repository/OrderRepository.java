@@ -1,7 +1,7 @@
 package com.repository;
 
+import com.constant.PaymentStatus;
 import com.entity.Order;
-import com.entity.PaymentTransaction;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -44,7 +44,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         Page<Order> findByStatusWithFilters(
                 @Param("status") Order.OrderStatus status,
                 @Param("keyword") String keyword,
-                @Param("paymentStatus") PaymentTransaction.PaymentStatus paymentStatus,
+                @Param("paymentStatus") PaymentStatus paymentStatus,
                 @Param("fromDate") LocalDateTime fromDate,
                 @Param("toDate") LocalDateTime toDate,
                 Pageable pageable
@@ -124,7 +124,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
         Page<Order> findByStatus(Order.OrderStatus status, Pageable pageable);
 
-        List<Order> findByPaymentStatus(PaymentTransaction.PaymentStatus status);
+        List<Order> findByPaymentStatus(PaymentStatus status);
 
         @Query("SELECT o FROM Order o WHERE o.createdAt BETWEEN :startDate AND :endDate")
         List<Order> findByDateRange(@Param("startDate") LocalDateTime startDate,
@@ -143,7 +143,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         "GROUP BY DATE(o.createdAt) " +
                         "ORDER BY DATE(o.createdAt)")
         List<Object[]> revenueGroupByDay(@Param("from") LocalDateTime from,
-                        @Param("status") PaymentTransaction.PaymentStatus status);
+                        @Param("status") PaymentStatus status);
 
         // Đếm đơn theo từng trạng thái
         @Query("SELECT o.status, COUNT(o) FROM Order o GROUP BY o.status")

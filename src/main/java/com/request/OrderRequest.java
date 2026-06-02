@@ -1,6 +1,6 @@
 package com.request;
 
-import com.entity.PaymentTransaction;
+import com.constant.PaymentMethod;
 import lombok.Data;
 
 import java.util.List;
@@ -9,7 +9,7 @@ import java.util.List;
 public class OrderRequest {
     private Long addressId;
     private List<Item> items;
-    private PaymentTransaction.PaymentMethod paymentMethod;
+    private PaymentMethod paymentMethod;
     private String couponCode;
 
     @Data

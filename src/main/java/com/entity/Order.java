@@ -1,4 +1,6 @@
 package com.entity;
+import com.constant.PaymentMethod;
+import com.constant.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -57,11 +59,11 @@ public class Order {
     private OrderStatus status = OrderStatus.PENDING;
 
     @Enumerated(EnumType.STRING)
-    private PaymentTransaction.PaymentMethod paymentMethod;
+    private PaymentMethod paymentMethod;
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
-    private PaymentTransaction.PaymentStatus paymentStatus = PaymentTransaction.PaymentStatus.UNPAID;
+    private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
 
     @Column(columnDefinition = "TEXT")
     private String note;

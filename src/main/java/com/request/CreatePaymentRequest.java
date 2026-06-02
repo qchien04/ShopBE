@@ -1,10 +1,10 @@
 package com.request;
 
-import com.entity.PaymentTransaction;
+import com.constant.PaymentMethod;
 import lombok.Data;
 
 @Data
 public class CreatePaymentRequest {
     private Long orderId;
-    private PaymentTransaction.PaymentMethod paymentMethod;
+    private PaymentMethod paymentMethod;
 }

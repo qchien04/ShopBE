@@ -1,7 +1,7 @@
 package com.controller;
 
 import com.DTO.OrderDTO;
-import com.entity.PaymentTransaction;
+import com.constant.PaymentStatus;
 import com.request.AdminOrderFilterRequest;
 import com.request.OrderRequest;
 import com.request.UpdateOrderStatusRequest;
@@ -10,7 +10,6 @@ import com.service.implement.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
 
 @RestController
 @RequestMapping("/orders")
@@ -62,7 +61,7 @@ public class OrderController {
 
     @PutMapping("/{id}/payment-status")
     public ResponseEntity<OrderDTO> updateOrderPaymentStatus(@PathVariable Long id,
-            @RequestParam PaymentTransaction.PaymentStatus status) {
+            @RequestParam PaymentStatus status) {
         return ResponseEntity.ok(orderService.updateOrderPaymentStatusAdmin(id, status));
     }
 

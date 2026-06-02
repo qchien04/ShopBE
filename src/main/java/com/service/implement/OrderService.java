@@ -3,6 +3,8 @@ package com.service.implement;
 import com.DTO.DiscountCalculationResult;
 import com.DTO.OrderDTO;
 import com.DTO.OrderStatusHistoryDTO;
+import com.constant.PaymentMethod;
+import com.constant.PaymentStatus;
 import com.entity.*;
 import com.exception.InvalidRequestException;
 import com.exception.NoPermissionException;
@@ -223,7 +225,7 @@ public class OrderService {
                 .shippingFee(calculateActualShippingFee(customerAddress, products, items))
                 .status(Order.OrderStatus.PENDING)
                 .paymentMethod(request.getPaymentMethod())
-                .paymentStatus(PaymentTransaction.PaymentStatus.UNPAID)
+                .paymentStatus(PaymentStatus.UNPAID)
                 .note("Ok")
                 .build();
 
@@ -483,12 +485,12 @@ public class OrderService {
         return (long) subTotal;
     }
 
-    public List<Order> findByPaymentStatus(PaymentTransaction.PaymentStatus status) {
+    public List<Order> findByPaymentStatus(PaymentStatus status) {
         return orderRepository.findByPaymentStatus(status);
     }
 
     @Transactional
-    public Order updatePaymentStatus(Long id, PaymentTransaction.PaymentStatus status, boolean isSystem) {
+    public Order updatePaymentStatus(Long id, PaymentStatus status, boolean isSystem) {
         if(isSystem){
             Order order = findEntityById(id);
             order.setPaymentStatus(status);
@@ -516,13 +518,13 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderDTO updateOrderPaymentStatusAdmin(Long id, PaymentTransaction.PaymentStatus status) {
+    public OrderDTO updateOrderPaymentStatusAdmin(Long id, PaymentStatus status) {
         Order order = updatePaymentStatus(id, status, false);
         return toDetailedDto(order);
     }
 
     @Transactional
-    public Order updatePaymentStatus(String orderNumber, PaymentTransaction.PaymentStatus status) {
+    public Order updatePaymentStatus(String orderNumber, PaymentStatus status) {
         Order order = findEntityByNumber(orderNumber);
         order.setPaymentStatus(status);
         return orderRepository.save(order);
@@ -713,8 +715,8 @@ public class OrderService {
         // Xác định COD: nếu đơn chưa thanh toán và là COD thì thu hộ
         long codAmount = req.getCodAmount() != null ? req.getCodAmount() : 0L;
         if (codAmount == 0 &&
-            order.getPaymentStatus() == PaymentTransaction.PaymentStatus.UNPAID &&
-            order.getPaymentMethod() == PaymentTransaction.PaymentMethod.COD) {
+            order.getPaymentStatus() == PaymentStatus.UNPAID &&
+            order.getPaymentMethod() == PaymentMethod.COD) {
             codAmount = order.getTotal().longValue();
         }
 

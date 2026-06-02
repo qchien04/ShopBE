@@ -1,8 +1,8 @@
 package com.DTO;
 
+import com.constant.PaymentMethod;
+import com.constant.PaymentStatus;
 import com.entity.Order;
-import com.entity.OrderItem;
-import com.entity.PaymentTransaction;
 import lombok.Data;
 
 
@@ -25,8 +25,8 @@ public class OrderDTO {
     private String couponDetails;
     private Double total;
     private Order.OrderStatus status;
-    private PaymentTransaction.PaymentMethod paymentMethod;
-    private PaymentTransaction.PaymentStatus paymentStatus;
+    private PaymentMethod paymentMethod;
+    private PaymentStatus paymentStatus;
     private String note;
     private List<OrderItemDTO> items;
     private LocalDateTime createdAt;

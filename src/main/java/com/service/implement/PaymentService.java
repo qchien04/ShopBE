@@ -1,4 +1,5 @@
 package com.service.implement;
+import com.constant.PaymentMethod;
 import com.entity.*;
 import com.exception.InvalidRequestException;
 import com.exception.NotFoundObjectRequestException;
@@ -26,29 +27,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
-    private final PaymentTransactionRepository transactionRepository;
-    private final PaymentRefundRepository refundRepository;
     private final OrderRepository orderRepository;
     private final PayOS payOS;
     private final ObjectMapper objectMapper;
-
-    @Transactional
-    public PaymentTransaction createTransaction(Long orderId, PaymentTransaction.PaymentMethod method, Double amount) {
-        PaymentTransaction transaction = new PaymentTransaction();
-        transaction.setTransactionCode("TXN" + System.currentTimeMillis());
-        transaction.setOrder(orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found")));
-        transaction.setPaymentMethod(method);
-        transaction.setAmount(amount);
-        transaction.setStatus(PaymentTransaction.TransactionStatus.PENDING);
-        return transactionRepository.save(transaction);
-    }
 
     private String getBaseUrl(HttpServletRequest request) {
         return "https://anbato.site";
     }
 
-    private boolean supportPayMentMethod(PaymentTransaction.PaymentMethod method) {
+    private boolean supportPayMentMethod(PaymentMethod method) {
         return true;
     }
 
@@ -57,7 +44,7 @@ public class PaymentService {
     @Transactional
     public Object createPaymentLink(HttpServletRequest request,@RequestBody CreatePaymentRequest createPaymentRequest) {
         Long myId = ((Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-        PaymentTransaction.PaymentMethod paymentMethod= createPaymentRequest.getPaymentMethod();
+        PaymentMethod paymentMethod= createPaymentRequest.getPaymentMethod();
 
         if(!supportPayMentMethod(paymentMethod)){
             throw new InvalidRequestException("Không hỗ trợ thanh toán!");
@@ -92,7 +79,7 @@ public class PaymentService {
             long price = order.getTotal().longValue();
             long orderCode = Long.parseLong(order.getOrderNumber().substring(3));
 
-            String returnUrl = baseUrl + "/success?orderId="+orderCode+"&amount="+price+"&method="+String.valueOf(PaymentTransaction.PaymentMethod.BANK_TRANSFER);
+            String returnUrl = baseUrl + "/success?orderId="+orderCode+"&amount="+price+"&method="+String.valueOf(PaymentMethod.BANK_TRANSFER);
             String cancelUrl = baseUrl + "/cancel";
             System.out.println(returnUrl);
 
@@ -123,32 +110,5 @@ public class PaymentService {
             throw new InvalidRequestException("Some thing went wrong!");
 
         }
-    }
-
-
-
-    @Transactional
-    public PaymentTransaction updateTransactionStatus(String transactionCode,
-                                                      PaymentTransaction.TransactionStatus status) {
-        PaymentTransaction transaction = transactionRepository
-                .findByTransactionCode(transactionCode)
-                .orElseThrow(() -> new RuntimeException("Transaction not found"));
-        transaction.setStatus(status);
-        if (status == PaymentTransaction.TransactionStatus.SUCCESS) {
-            transaction.setCompletedAt(LocalDateTime.now());
-        }
-        return transactionRepository.save(transaction);
-    }
-
-    @Transactional
-    public PaymentRefund createRefund(Long transactionId, Double amount, String reason) {
-        PaymentRefund refund = new PaymentRefund();
-        refund.setRefundCode("REF" + System.currentTimeMillis());
-        refund.setTransaction(transactionRepository.findById(transactionId)
-                .orElseThrow(() -> new RuntimeException("Transaction not found")));
-        refund.setRefundAmount(amount);
-        refund.setReason(reason);
-        refund.setStatus(PaymentRefund.RefundStatus.PENDING);
-        return refundRepository.save(refund);
     }
 }

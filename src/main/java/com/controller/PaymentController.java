@@ -1,5 +1,5 @@
 package com.controller;
-import com.entity.PaymentTransaction;
+import com.constant.PaymentStatus;
 import com.exception.NoPermissionException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.request.MyConfirmWebhookRequest;
@@ -66,7 +66,7 @@ public class PaymentController {
             if ("00".equals(data.getCode())) {
                 orderService.updatePaymentStatus(
                         "ORD" + data.getOrderCode(),
-                        PaymentTransaction.PaymentStatus.PAID
+                        PaymentStatus.PAID
                 );
             }
             return ApiResponse2.success("Webhook delivered", data);

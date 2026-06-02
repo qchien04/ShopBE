@@ -3,6 +3,7 @@ package com.service.AI;
 import com.DTO.OrderDTO;
 import com.DTO.ProductEmbeddingProjection;
 import com.constant.JwtConstant;
+import com.constant.PaymentMethod;
 import com.entity.ProductVariant;
 import com.repository.Ai.ProductEmbeddingRepository;
 import com.repository.ProductRepository;
@@ -10,7 +11,6 @@ import com.repository.ProductVariantRepository;
 import com.service.implement.OrderService;
 import com.service.implement.PaymentService;
 import com.request.CreatePaymentRequest;
-import com.entity.PaymentTransaction;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import com.repository.CustomerAddressRepository;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import vn.payos.model.v2.paymentRequests.CreatePaymentLinkResponse;
 
 import javax.crypto.SecretKey;
 import java.util.ArrayList;
@@ -97,7 +96,7 @@ public class ProductRagService {
     public Object getPaymentLinkForOrder(Long orderId) {
         CreatePaymentRequest request = new CreatePaymentRequest();
 //        request.setOrderId(orderId);
-        request.setPaymentMethod(PaymentTransaction.PaymentMethod.BANK_TRANSFER);
+        request.setPaymentMethod(PaymentMethod.BANK_TRANSFER);
         return paymentService.createPaymentLink(getCurrentRequest(), request);
     }
 
@@ -177,7 +176,7 @@ public class ProductRagService {
             request.setAddressId(Long.valueOf(addressObj.toString()));
 
             String method = Objects.toString(agentOrder.get("paymentMethod"), "COD");
-            request.setPaymentMethod(PaymentTransaction.PaymentMethod.valueOf(method));
+            request.setPaymentMethod(PaymentMethod.valueOf(method));
 
             com.request.OrderRequest.Item item = new com.request.OrderRequest.Item();
             item.setProductVariantId(Long.valueOf(variantObj.toString()));
@@ -226,7 +225,7 @@ public class ProductRagService {
             return fallback;
         }
     }
-    private final org.springframework.web.reactive.function.client.WebClient webClient = org.springframework.web.reactive.function.client.WebClient.create("http://python-agent:8000");
+    //private final org.springframework.web.reactive.function.client.WebClient webClient = org.springframework.web.reactive.function.client.WebClient.create("http://python-agent:8000");
 
-//    private final org.springframework.web.reactive.function.client.WebClient webClient = org.springframework.web.reactive.function.client.WebClient.create("http://localhost:8000");
+    private final org.springframework.web.reactive.function.client.WebClient webClient = org.springframework.web.reactive.function.client.WebClient.create("http://localhost:8000");
 }

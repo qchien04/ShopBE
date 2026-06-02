@@ -1,9 +1,8 @@
 package com.service;
 
 import com.DTO.dashboard.*;
+import com.constant.PaymentStatus;
 import com.entity.Order;
-import com.entity.PaymentTransaction;
-import com.entity.Product;
 import com.repository.OrderRepository;
 import com.repository.ProductRepository;
 import com.repository.UserAccountRepo;
@@ -97,7 +96,7 @@ public class DashboardService {
         // ─── Bar chart: doanh thu 7 ngày ────────────────────────────────────────
         private List<RevenueByDayDTO> buildRevenueByDay() {
                 LocalDateTime from = LocalDate.now().minusDays(6).atStartOfDay();
-                List<Object[]> rows = orderRepository.revenueGroupByDay(from, PaymentTransaction.PaymentStatus.PAID);
+                List<Object[]> rows = orderRepository.revenueGroupByDay(from, PaymentStatus.PAID);
 
                 // Map ngày -> revenue từ DB
                 Map<LocalDate, Double> revenueMap = new LinkedHashMap<>();

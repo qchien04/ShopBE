@@ -1,6 +1,5 @@
 package com.request;
 
-import com.entity.PaymentTransaction;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDate;
