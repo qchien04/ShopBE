@@ -142,9 +142,20 @@ public class GHNService {
                     new ParameterizedTypeReference<Map<String, Object>>() {
                     });
             return extractData(response.getBody());
+        } catch (org.springframework.web.client.HttpStatusCodeException e) {
+            String ghnMsg = "Lỗi hệ thống GHN";
+            try {
+                com.fasterxml.jackson.databind.JsonNode root = new com.fasterxml.jackson.databind.ObjectMapper()
+                        .readTree(e.getResponseBodyAsString());
+                if (root.has("message"))
+                    ghnMsg = root.get("message").asText();
+            } catch (Exception ex) {
+            }
+            log.error("GHN calculateFee API Error: {}", e.getResponseBodyAsString());
+            throw new com.exception.InvalidRequestException("GHN từ chối: " + ghnMsg);
         } catch (Exception e) {
             log.error("GHN calculateFee error: {}", e.getMessage());
-            throw new RuntimeException("Không thể tính phí vận chuyển GHN: " + e.getMessage());
+            throw new com.exception.InvalidRequestException("Không thể tính phí vận chuyển GHN: " + e.getMessage());
         }
     }
 
@@ -208,30 +219,45 @@ public class GHNService {
         if (request.getFromPhone() != null) {
             body.put("from_phone", request.getFromPhone());
         }
-        
-        String fromAddress = request.getFromAddress() != null ? request.getFromAddress() : shopConfig.getDetailAddress();
-        if (fromAddress != null) body.put("from_address", fromAddress);
-        
+
+        String fromAddress = request.getFromAddress() != null ? request.getFromAddress()
+                : shopConfig.getDetailAddress();
+        if (fromAddress != null)
+            body.put("from_address", fromAddress);
+
         String fromWardName = request.getFromWardName() != null ? request.getFromWardName() : shopConfig.getWardName();
-        if (fromWardName != null) body.put("from_ward_name", fromWardName);
-        
-        String fromDistrictName = request.getFromDistrictName() != null ? request.getFromDistrictName() : shopConfig.getDistrictName();
-        if (fromDistrictName != null) body.put("from_district_name", fromDistrictName);
-        
-        String fromProvinceName = request.getFromProvinceName() != null ? request.getFromProvinceName() : shopConfig.getProvinceName();
-        if (fromProvinceName != null) body.put("from_province_name", fromProvinceName);
+        if (fromWardName != null)
+            body.put("from_ward_name", fromWardName);
+
+        String fromDistrictName = request.getFromDistrictName() != null ? request.getFromDistrictName()
+                : shopConfig.getDistrictName();
+        if (fromDistrictName != null)
+            body.put("from_district_name", fromDistrictName);
+
+        String fromProvinceName = request.getFromProvinceName() != null ? request.getFromProvinceName()
+                : shopConfig.getProvinceName();
+        if (fromProvinceName != null)
+            body.put("from_province_name", fromProvinceName);
 
         // Tùy chọn return (địa chỉ trả hàng)
-        if (request.getReturnPhone() != null) body.put("return_phone", request.getReturnPhone());
-        if (request.getReturnAddress() != null) body.put("return_address", request.getReturnAddress());
-        if (request.getReturnDistrictId() != null) body.put("return_district_id", request.getReturnDistrictId());
-        if (request.getReturnWardCode() != null) body.put("return_ward_code", request.getReturnWardCode());
+        if (request.getReturnPhone() != null)
+            body.put("return_phone", request.getReturnPhone());
+        if (request.getReturnAddress() != null)
+            body.put("return_address", request.getReturnAddress());
+        if (request.getReturnDistrictId() != null)
+            body.put("return_district_id", request.getReturnDistrictId());
+        if (request.getReturnWardCode() != null)
+            body.put("return_ward_code", request.getReturnWardCode());
 
         // Khác
-        if (request.getCoupon() != null) body.put("coupon", request.getCoupon());
-        if (request.getPickStationId() != null) body.put("pick_station_id", request.getPickStationId());
-        if (request.getDeliverStationId() != null) body.put("deliver_station_id", request.getDeliverStationId());
-        if (request.getPickShift() != null) body.put("pick_shift", request.getPickShift());
+        if (request.getCoupon() != null)
+            body.put("coupon", request.getCoupon());
+        if (request.getPickStationId() != null)
+            body.put("pick_station_id", request.getPickStationId());
+        if (request.getDeliverStationId() != null)
+            body.put("deliver_station_id", request.getDeliverStationId());
+        if (request.getPickShift() != null)
+            body.put("pick_shift", request.getPickShift());
 
         // Items (required: name, quantity, weight)
         List<Map<String, Object>> items = request.getItems();
@@ -252,9 +278,20 @@ public class GHNService {
             Map<String, Object> data = extractData(response.getBody());
             log.info("GHN Order created: {}", data.get("order_code"));
             return data;
+        } catch (org.springframework.web.client.HttpStatusCodeException e) {
+            String ghnMsg = "Lỗi hệ thống GHN";
+            try {
+                com.fasterxml.jackson.databind.JsonNode root = new com.fasterxml.jackson.databind.ObjectMapper()
+                        .readTree(e.getResponseBodyAsString());
+                if (root.has("message"))
+                    ghnMsg = root.get("message").asText();
+            } catch (Exception ex) {
+            }
+            log.error("GHN createShippingOrder API Error: {}", e.getResponseBodyAsString());
+            throw new com.exception.InvalidRequestException("Lỗi tạo vận đơn GHN: " + ghnMsg);
         } catch (Exception e) {
             log.error("GHN createShippingOrder error: {}", e.getMessage());
-            throw new RuntimeException("Không thể tạo đơn vận chuyển GHN: " + e.getMessage());
+            throw new com.exception.InvalidRequestException("Không thể tạo đơn vận chuyển GHN: " + e.getMessage());
         }
     }
 
@@ -335,7 +372,8 @@ public class GHNService {
 
     private Integer getAvailableServiceId(Integer fromDistrict, Integer toDistrict) {
         if (fromDistrict == null || toDistrict == null || fromDistrict <= 0 || toDistrict <= 0) {
-            log.warn("getAvailableServiceId: Bỏ qua vì fromDistrict={} hoặc toDistrict={} không hợp lệ", fromDistrict, toDistrict);
+            log.warn("getAvailableServiceId: Bỏ qua vì fromDistrict={} hoặc toDistrict={} không hợp lệ", fromDistrict,
+                    toDistrict);
             return null;
         }
         try {
@@ -388,7 +426,7 @@ public class GHNService {
         private String toAddress;
         private String toWardCode;
         private Integer toDistrictId;
-        
+
         // Cấu hình gửi hàng (Tùy chọn, nếu null sẽ lấy mặc định của Shop)
         private String fromName;
         private String fromPhone;
@@ -396,13 +434,13 @@ public class GHNService {
         private String fromWardName;
         private String fromDistrictName;
         private String fromProvinceName;
-        
+
         // Cấu hình trả hàng (Tùy chọn)
         private String returnPhone;
         private String returnAddress;
         private Integer returnDistrictId;
         private String returnWardCode;
-        
+
         // Các trường khác
         private Integer weight; // gram
         private Integer length; // cm
@@ -420,7 +458,7 @@ public class GHNService {
         private Integer pickStationId;
         private Integer deliverStationId;
         private List<Integer> pickShift;
-        
+
         private List<Map<String, Object>> items;
     }
 }

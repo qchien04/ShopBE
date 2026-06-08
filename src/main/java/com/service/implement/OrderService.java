@@ -580,21 +580,18 @@ public class OrderService {
         Order.OrderStatus newStatus = req.getStatus();
         Order.OrderStatus oldStatus = order.getStatus();
 
-        // ── 1. Validate chuyển trạng thái ─────────────────────────────────────
         Set<Order.OrderStatus> allowed = ALLOWED_TRANSITIONS.getOrDefault(oldStatus, Set.of());
         if (!allowed.contains(newStatus)) {
             throw new IllegalStateException(
                     "Không thể chuyển từ " + oldStatus + " sang " + newStatus);
         }
 
-        // ── 2. Validate lý do bắt buộc ────────────────────────────────────────
         if (REQUIRE_REASON.contains(newStatus) &&
                 (req.getReason() == null || req.getReason().isBlank())) {
             throw new IllegalArgumentException(
                     "Vui lòng nhập lý do khi chuyển sang trạng thái: " + newStatus);
         }
 
-        // ── 3. Xử lý từng trường hợp ──────────────────────────────────────────
         switch (newStatus) {
 
             case CONFIRMED -> {
