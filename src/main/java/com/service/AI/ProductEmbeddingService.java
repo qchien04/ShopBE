@@ -1,6 +1,6 @@
 package com.service.AI;
 
-import com.entity.AI.ProductEmbedding;
+import com.entity.ProductEmbedding;
 import com.entity.Product;
 import com.exception.NotFoundObjectRequestException;
 import com.repository.Ai.ProductEmbeddingRepository;
@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor

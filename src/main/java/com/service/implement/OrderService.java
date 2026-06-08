@@ -226,7 +226,7 @@ public class OrderService {
                 .status(Order.OrderStatus.PENDING)
                 .paymentMethod(request.getPaymentMethod())
                 .paymentStatus(PaymentStatus.UNPAID)
-                .note("Ok")
+                .note(request.getNote())
                 .build();
 
         double subTotal = 0.0;

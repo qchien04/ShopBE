@@ -1,4 +1,4 @@
-package com.entity.AI;
+package com.entity;
 
 import com.repository.Ai.VectorType;
 import jakarta.persistence.Column;
@@ -9,9 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.Type;
-import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "product_embeddings")

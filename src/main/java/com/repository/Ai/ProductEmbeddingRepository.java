@@ -1,7 +1,7 @@
 package com.repository.Ai;
 
 import com.DTO.ProductEmbeddingProjection;
-import com.entity.AI.ProductEmbedding;
+import com.entity.ProductEmbedding;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

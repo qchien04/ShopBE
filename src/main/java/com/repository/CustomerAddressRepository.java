@@ -14,5 +14,9 @@ public interface CustomerAddressRepository extends JpaRepository<CustomerAddress
 
     /** Dùng để tra cứu địa chỉ (có GHN codes) khi tạo vận đơn */
     Optional<CustomerAddress> findFirstByUserIdAndFullNameAndPhone(Long userId, String fullName, String phone);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("UPDATE CustomerAddress c SET c.isDefault = false WHERE c.user.id = :userId")
+    void resetDefaultAddressForUser(@org.springframework.data.repository.query.Param("userId") Long userId);
 }
 

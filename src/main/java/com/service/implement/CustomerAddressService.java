@@ -30,6 +30,10 @@ public class CustomerAddressService {
     public CustomerAddressDTO createCustomerAddress(CreateCustomerAddressRequest r) {
         Long myId = ((Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
 
+        if (Boolean.TRUE.equals(r.getIsDefault())) {
+            customerAddressRepository.resetDefaultAddressForUser(myId);
+        }
+
         CustomerAddress customerAddress=CustomerAddress.builder()
                 .user(User.builder().id(myId).build())
                 .fullName(r.getFullName())
@@ -49,6 +53,10 @@ public class CustomerAddressService {
     @Transactional
     public CustomerAddressDTO updateCustomerAddress(UpdateCustomerAddressRequest r) {
         Long myId = ((Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+
+        if (Boolean.TRUE.equals(r.getIsDefault())) {
+            customerAddressRepository.resetDefaultAddressForUser(myId);
+        }
 
         CustomerAddress customerAddress=customerAddressRepository.findByIdAndUserId(r.getId(),myId)
                 .orElseThrow(()->new NotFoundObjectRequestException("Không tồn tại địa chỉ!"));

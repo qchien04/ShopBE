@@ -11,6 +11,7 @@ public class OrderRequest {
     private List<Item> items;
     private PaymentMethod paymentMethod;
     private String couponCode;
+    private String note;
 
     @Data
     public static class Item{
